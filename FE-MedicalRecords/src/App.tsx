@@ -4,6 +4,7 @@ import ProtectedRouter from './components/protectedRouter'
 import Login from './pages/login'
 import { AddPatientPage, DiagnosePatientPage, EditPatientPage, PatientPage, ResultPatientPage } from './pages/patient'
 import ProfilePage from './pages/profile'
+import { PredictionContextProvider } from './pages/patient/PredictionContext';
 
 const router = createBrowserRouter([
   {
@@ -44,6 +45,7 @@ const router = createBrowserRouter([
 function App() {
   return (
     <>
+      <PredictionContextProvider>
       <RouterProvider router={router} />
       <Toaster
         position='top-center'
@@ -54,6 +56,7 @@ function App() {
           }
         }}
       />
+      </PredictionContextProvider>
     </>
   )
 }
