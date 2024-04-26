@@ -1,4 +1,7 @@
 import { genders } from '@/types/enum'
+import image_eye_1 from '../assets/eye-images/35164_left.jpeg'
+import image_eye_2 from '../assets/eye-images/35164_right.jpeg'
+import image_eye_3 from '../assets/eye-images/35175_left.jpeg'
 
 const sUser: IUser = {
   id: '1',
@@ -63,28 +66,28 @@ const patients: IResFormat<IPatient> = {
       images: [
         {
           id: '1',
-          title: 'meo meo meo meo meo meo meo meo meo meo meo meo ',
-          url: 'https://res.cloudinary.com/azurestore/image/upload/v1694536796/ShoeBeeDoo/jnnftuytmhidkrfkc6yt.webp'
+          title: 'Patient Eye 1 Patient Eye 1 Patient Eye 1 Patient Eye 1 Patient Eye 1 Patient Eye 1 ',
+          url: image_eye_1
         },
         {
           id: '2',
-          title: 'Do mixi',
-          url: 'https://res.cloudinary.com/azurestore/image/upload/v1703780359/edu-genious/mtsiilqev8y7nhlj2bm0.jpg'
+          title: 'Patient Eye 2',
+          url: image_eye_2
         },
         {
           id: '3',
-          title: '2 meo',
-          url: 'https://res.cloudinary.com/azurestore/image/upload/v1703781040/edu-genious/vgiraudnnrnf5s3r3nos.jpg'
+          title: 'Patient Eye 3',
+          url: image_eye_3
         },
         {
           id: '4',
-          title: '2 meo',
-          url: 'https://res.cloudinary.com/azurestore/image/upload/v1703781040/edu-genious/vgiraudnnrnf5s3r3nos.jpg'
+          title: 'Patient Eye 3',
+          url: image_eye_3
         },
         {
           id: '5',
-          title: '2 meo',
-          url: 'https://res.cloudinary.com/azurestore/image/upload/v1703781040/edu-genious/vgiraudnnrnf5s3r3nos.jpg'
+          title: 'Patient Eye 3',
+          url: image_eye_3
         }
       ],
       gender: genders.Male,
@@ -130,23 +133,23 @@ const patients: IResFormat<IPatient> = {
       images: [
         {
           id: '1',
-          title: 'meo meo',
-          url: 'https://res.cloudinary.com/azurestore/image/upload/v1694536796/ShoeBeeDoo/jnnftuytmhidkrfkc6yt.webp'
+          title: 'Patient Eye 1',
+          url: image_eye_1
         },
         {
           id: '2',
-          title: 'Do mixi',
-          url: 'https://res.cloudinary.com/azurestore/image/upload/v1703780359/edu-genious/mtsiilqev8y7nhlj2bm0.jpg'
+          title: 'Patient Eye 2',
+          url: image_eye_2
         },
         {
           id: '3',
-          title: '2 meo',
-          url: 'https://res.cloudinary.com/azurestore/image/upload/v1703781040/edu-genious/vgiraudnnrnf5s3r3nos.jpg'
+          title: 'Patient Eye 3',
+          url: image_eye_3
         },
         {
           id: '4',
-          title: '2 meo',
-          url: 'https://res.cloudinary.com/azurestore/image/upload/v1703781040/edu-genious/vgiraudnnrnf5s3r3nos.jpg'
+          title: 'Patient Eye 3',
+          url: image_eye_3
         }
       ],
       gender: genders.Male,
@@ -190,23 +193,23 @@ const patients: IResFormat<IPatient> = {
       images: [
         {
           id: '1',
-          title: 'meo meo',
-          url: 'https://res.cloudinary.com/azurestore/image/upload/v1694536796/ShoeBeeDoo/jnnftuytmhidkrfkc6yt.webp'
+          title: 'Patient Eye 1',
+          url: image_eye_1
         },
         {
           id: '2',
-          title: 'Do mixi',
-          url: 'https://res.cloudinary.com/azurestore/image/upload/v1703780359/edu-genious/mtsiilqev8y7nhlj2bm0.jpg'
+          title: 'Patient Eye 2',
+          url: image_eye_2
         },
         {
           id: '3',
-          title: '2 meo',
-          url: 'https://res.cloudinary.com/azurestore/image/upload/v1703781040/edu-genious/vgiraudnnrnf5s3r3nos.jpg'
+          title: 'Patient Eye 3',
+          url: image_eye_3
         },
         {
           id: '4',
-          title: '2 meo',
-          url: 'https://res.cloudinary.com/azurestore/image/upload/v1703781040/edu-genious/vgiraudnnrnf5s3r3nos.jpg'
+          title: 'Patient Eye 3',
+          url: image_eye_3
         }
       ],
       gender: genders.Male,
@@ -250,23 +253,23 @@ const patients: IResFormat<IPatient> = {
       images: [
         {
           id: '1',
-          title: 'meo meo',
-          url: 'https://res.cloudinary.com/azurestore/image/upload/v1694536796/ShoeBeeDoo/jnnftuytmhidkrfkc6yt.webp'
+          title: 'Patient Eye 1',
+          url: image_eye_1
         },
         {
           id: '2',
-          title: 'Do mixi',
-          url: 'https://res.cloudinary.com/azurestore/image/upload/v1703780359/edu-genious/mtsiilqev8y7nhlj2bm0.jpg'
+          title: 'Patient Eye 2',
+          url: image_eye_2
         },
         {
           id: '3',
-          title: '2 meo',
-          url: 'https://res.cloudinary.com/azurestore/image/upload/v1703781040/edu-genious/vgiraudnnrnf5s3r3nos.jpg'
+          title: 'Patient Eye 3',
+          url: image_eye_3
         },
         {
           id: '4',
-          title: '2 meo',
-          url: 'https://res.cloudinary.com/azurestore/image/upload/v1703781040/edu-genious/vgiraudnnrnf5s3r3nos.jpg'
+          title: 'Patient Eye 3',
+          url: image_eye_3
         }
       ],
       gender: genders.Male,
@@ -310,23 +313,23 @@ const patients: IResFormat<IPatient> = {
       images: [
         {
           id: '1',
-          title: 'meo meo',
-          url: 'https://res.cloudinary.com/azurestore/image/upload/v1694536796/ShoeBeeDoo/jnnftuytmhidkrfkc6yt.webp'
+          title: 'Patient Eye 1',
+          url: image_eye_1
         },
         {
           id: '2',
-          title: 'Do mixi',
-          url: 'https://res.cloudinary.com/azurestore/image/upload/v1703780359/edu-genious/mtsiilqev8y7nhlj2bm0.jpg'
+          title: 'Patient Eye 2',
+          url: image_eye_2
         },
         {
           id: '3',
-          title: '2 meo',
-          url: 'https://res.cloudinary.com/azurestore/image/upload/v1703781040/edu-genious/vgiraudnnrnf5s3r3nos.jpg'
+          title: 'Patient Eye 3',
+          url: image_eye_3
         },
         {
           id: '4',
-          title: '2 meo',
-          url: 'https://res.cloudinary.com/azurestore/image/upload/v1703781040/edu-genious/vgiraudnnrnf5s3r3nos.jpg'
+          title: 'Patient Eye 3',
+          url: image_eye_3
         }
       ],
       gender: genders.Male,
@@ -370,23 +373,23 @@ const patients: IResFormat<IPatient> = {
       images: [
         {
           id: '1',
-          title: 'meo meo',
-          url: 'https://res.cloudinary.com/azurestore/image/upload/v1694536796/ShoeBeeDoo/jnnftuytmhidkrfkc6yt.webp'
+          title: 'Patient Eye 1',
+          url: image_eye_1
         },
         {
           id: '2',
-          title: 'Do mixi',
-          url: 'https://res.cloudinary.com/azurestore/image/upload/v1703780359/edu-genious/mtsiilqev8y7nhlj2bm0.jpg'
+          title: 'Patient Eye 2',
+          url: image_eye_2
         },
         {
           id: '3',
-          title: '2 meo',
-          url: 'https://res.cloudinary.com/azurestore/image/upload/v1703781040/edu-genious/vgiraudnnrnf5s3r3nos.jpg'
+          title: 'Patient Eye 3',
+          url: image_eye_3
         },
         {
           id: '4',
-          title: '2 meo',
-          url: 'https://res.cloudinary.com/azurestore/image/upload/v1703781040/edu-genious/vgiraudnnrnf5s3r3nos.jpg'
+          title: 'Patient Eye 3',
+          url: image_eye_3
         }
       ],
       gender: genders.Male,
@@ -430,23 +433,23 @@ const patients: IResFormat<IPatient> = {
       images: [
         {
           id: '1',
-          title: 'meo meo',
-          url: 'https://res.cloudinary.com/azurestore/image/upload/v1694536796/ShoeBeeDoo/jnnftuytmhidkrfkc6yt.webp'
+          title: 'Patient Eye 1',
+          url: image_eye_1
         },
         {
           id: '2',
-          title: 'Do mixi',
-          url: 'https://res.cloudinary.com/azurestore/image/upload/v1703780359/edu-genious/mtsiilqev8y7nhlj2bm0.jpg'
+          title: 'Patient Eye 2',
+          url: image_eye_2
         },
         {
           id: '3',
-          title: '2 meo',
-          url: 'https://res.cloudinary.com/azurestore/image/upload/v1703781040/edu-genious/vgiraudnnrnf5s3r3nos.jpg'
+          title: 'Patient Eye 3',
+          url: image_eye_3
         },
         {
           id: '4',
-          title: '2 meo',
-          url: 'https://res.cloudinary.com/azurestore/image/upload/v1703781040/edu-genious/vgiraudnnrnf5s3r3nos.jpg'
+          title: 'Patient Eye 3',
+          url: image_eye_3
         }
       ],
       gender: genders.Male,
@@ -490,23 +493,23 @@ const patients: IResFormat<IPatient> = {
       images: [
         {
           id: '1',
-          title: 'meo meo',
-          url: 'https://res.cloudinary.com/azurestore/image/upload/v1694536796/ShoeBeeDoo/jnnftuytmhidkrfkc6yt.webp'
+          title: 'Patient Eye 1',
+          url: image_eye_1
         },
         {
           id: '2',
-          title: 'Do mixi',
-          url: 'https://res.cloudinary.com/azurestore/image/upload/v1703780359/edu-genious/mtsiilqev8y7nhlj2bm0.jpg'
+          title: 'Patient Eye 2',
+          url: image_eye_2
         },
         {
           id: '3',
-          title: '2 meo',
-          url: 'https://res.cloudinary.com/azurestore/image/upload/v1703781040/edu-genious/vgiraudnnrnf5s3r3nos.jpg'
+          title: 'Patient Eye 3',
+          url: image_eye_3
         },
         {
           id: '4',
-          title: '2 meo',
-          url: 'https://res.cloudinary.com/azurestore/image/upload/v1703781040/edu-genious/vgiraudnnrnf5s3r3nos.jpg'
+          title: 'Patient Eye 3',
+          url: image_eye_3
         }
       ],
       gender: genders.Male,
@@ -550,23 +553,23 @@ const patients: IResFormat<IPatient> = {
       images: [
         {
           id: '1',
-          title: 'meo meo',
-          url: 'https://res.cloudinary.com/azurestore/image/upload/v1694536796/ShoeBeeDoo/jnnftuytmhidkrfkc6yt.webp'
+          title: 'Patient Eye 1',
+          url: image_eye_1
         },
         {
           id: '2',
-          title: 'Do mixi',
-          url: 'https://res.cloudinary.com/azurestore/image/upload/v1703780359/edu-genious/mtsiilqev8y7nhlj2bm0.jpg'
+          title: 'Patient Eye 2',
+          url: image_eye_2
         },
         {
           id: '3',
-          title: '2 meo',
-          url: 'https://res.cloudinary.com/azurestore/image/upload/v1703781040/edu-genious/vgiraudnnrnf5s3r3nos.jpg'
+          title: 'Patient Eye 3',
+          url: image_eye_3
         },
         {
           id: '4',
-          title: '2 meo',
-          url: 'https://res.cloudinary.com/azurestore/image/upload/v1703781040/edu-genious/vgiraudnnrnf5s3r3nos.jpg'
+          title: 'Patient Eye 3',
+          url: image_eye_3
         }
       ],
       gender: genders.Male,
