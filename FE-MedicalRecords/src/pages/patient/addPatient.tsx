@@ -17,30 +17,32 @@ export interface FormData {
 export default function AddPatientPage() {
   const [files, setFiles] = useState<File[]>([])
 
-  const handleAdd = useCallback(
-    async (data: FormData) => {
-      const formData = new FormData()
-
-      try {
-        for (const images of files) {
-          formData.append('files', images)
-        }
-
-        const payload = {
-          ...data,
-          images: files
-        }
-        console.log(payload)
-
-        if (data) {
-          toastSuccess('Thêm bệnh nhân thành công ')
-        }
-      } catch (error) {
-        toastError((error as IError).error)
+  const handleAdd = async (data: FormData) => {
+    try {
+      // Generate a random 6-digit number
+      const id_patient = Math.floor(100000 + Math.random() * 900000);
+  
+      // Add the id_patient field at the top of the data object
+      const newData = { id_patient: String(id_patient), ...data };
+  
+      const response = await fetch('http://localhost:3001/patients/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newData), // Send newData instead of data
+      });
+  
+      if (!response.ok) {
+        const errorData: { error: string } = await response.json();
+        throw new Error(errorData.error);
       }
-    },
-    [files]
-  )
+      
+      toastSuccess('Thêm bệnh nhân thành công');
+    } catch (error) {
+      toastError((error as Error).message);
+    }
+  };  
 
   const inputRef = useRef<HTMLInputElement>(null)
 
