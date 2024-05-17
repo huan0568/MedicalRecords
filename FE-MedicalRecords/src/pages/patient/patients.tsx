@@ -8,7 +8,8 @@ import { patients } from '@/utils/fakeData'
 import { resultOptions } from '@/utils/filters'
 import { toastError, toastSuccess } from '@/utils/toast'
 import useHandleSetUrl from '@/utils/useHandleUrl'
-import { useCallback, useState } from 'react'
+import axios from 'axios'
+import { useCallback, useEffect, useState } from 'react'
 import { CiSearch } from 'react-icons/ci'
 import { IoRefresh } from 'react-icons/io5'
 import { useSearchParams } from 'react-router-dom'
@@ -16,6 +17,16 @@ import { useSearchParams } from 'react-router-dom'
 export default function PatientPage() {
   const handleSetUrl = useHandleSetUrl()
   const [searchParams] = useSearchParams()
+
+  async function fetchTest(){
+    const res = await axios.get(`${import.meta.env.VITE_PUBLIC_API}/patients`)
+    console.log(res.data)
+  }
+
+
+  useEffect(() => {
+    fetchTest()
+  },[])
 
   const keyword = searchParams.get('keyword') || ''
   const currentPage = searchParams.get('page') || 1
@@ -31,6 +42,8 @@ export default function PatientPage() {
   })
 
   const [openDiagnose, setOpenDiagnose] = useState<boolean>(false)
+  
+
 
   const handleDelete = useCallback(async (id: string) => {
     try {
