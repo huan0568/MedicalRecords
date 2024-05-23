@@ -1,15 +1,44 @@
 import { CommentDiagnose, MainImageDiagnose } from '@/components/patient/diagnose'
 import { DetailPatient, ImageResults } from '@/components/patient/result'
-import { patients } from '@/utils/fakeData'
+import { useState, useEffect } from 'react'
 import { FaLongArrowAltLeft } from 'react-icons/fa'
 import { useParams } from 'react-router-dom'
+import axios from 'axios'
 
 export default function DiagnosePatientPage() {
   const { id } = useParams<{ id: string }>()
+  const [patientData, setPatientData] = useState<IPatient | null>(null)
+  const [patientImages, setPatientImages] = useState<string[]>([])
 
-  // get data of patient by id from api and set to form
-  // in this case, I use a fake data
-  const tempData = patients.data.find((patient) => patient.id === id)
+  useEffect(() => {
+    const fetchPatientData = async () => {
+      try {
+        const patientResponse = await axios.get(`http://localhost:3001/patients/find/${id}`)
+        setPatientData(patientResponse.data)
+
+        const imagesResponse = await axios.get(`http://localhost:3001/images/patient/${id}`)
+        const images = imagesResponse.data.map((img: any) => `data:${img.contentType};base64,${arrayBufferToBase64(img.data.data)}`)
+        setPatientImages(images)
+      } catch (error) {
+        console.error('Error fetching patient data:', error)
+        setPatientData(null)
+        setPatientImages([])
+      }
+    }
+
+    fetchPatientData()
+  }, [id])
+
+  // Function to convert ArrayBuffer to base64 string
+  const arrayBufferToBase64 = (buffer: ArrayBuffer) => {
+    let binary = ''
+    const bytes = new Uint8Array(buffer)
+    const len = bytes.byteLength
+    for (let i = 0; i < len; i++) {
+      binary += String.fromCharCode(bytes[i])
+    }
+    return window.btoa(binary)
+  }
 
   return (
     <section id='result-patient' className='pt-16'>
@@ -23,16 +52,24 @@ export default function DiagnosePatientPage() {
       </div>
       <div className='gap-4 lg:flex'>
         <div className='h-full py-3 mb-4 bg-white lg:w-1/6 rounded-xl shadow-pop lg:mb-0'>
-          <DetailPatient data={tempData as IPatient} />
+          {/* Render DetailPatient component with patientData */}
+          {patientData ? <DetailPatient data={patientData} /> : null}
         </div>
         <div className='flex-1 p-4 mb-4 h-[33rem] bg-white rounded-xl shadow-pop lg:mb-0'>
-          <MainImageDiagnose images={tempData?.images} />
+          {/* Render MainImageDiagnose component with patientImages */}
+          <MainImageDiagnose images={patientImages} />
         </div>
         <div className='lg:w-1/5'>
-          <ImageResults data={tempData as IPatient} />
-          <CommentDiagnose data={tempData as IPatient} />
+          {/* Render ImageResults and CommentDiagnose components with patientData */}
+          {patientData ? (
+            <>
+              <ImageResults data={patientData} />
+              <CommentDiagnose data={patientData} />
+            </>
+          ) : null}
         </div>
       </div>
     </section>
   )
 }
+

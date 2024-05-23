@@ -18,7 +18,7 @@ export default function DetailPatient({ data }: IProps) {
             <CiBarcode className='text-2xl absolute-center-y left-4' />
             <input
               disabled
-              value={data.id}
+              value={data.id_patient}
               type='text'
               id='name'
               className='w-full py-3 pr-4 mt-1 border pl-14 border-slate-400 rounded-xl'

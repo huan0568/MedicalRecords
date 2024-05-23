@@ -1,11 +1,10 @@
 import AddForm from '@/components/patient/form/addForm'
 import ImageUploadItem from '@/components/patient/form/imageUpload'
-import { patients } from '@/utils/fakeData'
-import { toastError, toastSuccess } from '@/utils/toast'
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useRef, useState, useEffect } from 'react'
 import { BsImages } from 'react-icons/bs'
 import { FaLongArrowAltLeft } from 'react-icons/fa'
 import { useParams } from 'react-router-dom'
+import axios from 'axios'
 
 export interface FormData {
   name: string
@@ -13,45 +12,47 @@ export interface FormData {
   email: string
   age: number
   address: string
-  images: string[]
 }
 
 export default function EditPatientPage() {
   const { id } = useParams<{ id: string }>()
 
-  // get data of patient by id from api and set to form
-  // in this case, I use a fake data
-  const tempData = patients.data.find((patient) => patient.id === id)
+  // State to store patient data
+  const [patientData, setPatientData] = useState<FormData | null>(null)
+  // State to store patient images
+  const [patientImages, setPatientImages] = useState<string[]>([])
+  // State to store uploaded files
+  const [files, setFiles] = useState<File[]>([])
 
-  const [files, setFiles] = useState<(File | IImages)[]>(tempData?.images || [])
+  useEffect(() => {
+    const fetchPatientData = async () => {
+      try {
+        const response = await axios.get(`http://localhost:3001/patients/find/${id}`)
+        setPatientData(response.data)
+      } catch (error) {
+        console.error('Error fetching patient data:', error)
+      }
+    }
+
+    const fetchPatientImages = async () => {
+      try {
+        const imagesResponse = await axios.get(`http://localhost:3001/images/patient/${id}`)
+        const images = imagesResponse.data.map((img: any) => `data:${img.contentType};base64,${arrayBufferToBase64(img.data.data)}`)
+        setPatientImages(images)
+      } catch (error) {
+        console.error('Error fetching patient images:', error)
+      }
+    }
+
+    fetchPatientData()
+    fetchPatientImages()
+  }, [id])
 
   const handleUpdate = useCallback(
     async (data: FormData) => {
-      const formData = new FormData()
-
-      try {
-        for (const images of files) {
-          if (images instanceof File) {
-            formData.append('files', images)
-          } else {
-            formData.append('files', images.url)
-          }
-        }
-
-        const payload = {
-          ...data,
-          images: files
-        }
-        console.log(payload)
-
-        if (data) {
-          toastSuccess('Cập nhật bệnh nhân thành công')
-        }
-      } catch (error) {
-        toastError((error as IError).error)
-      }
+      // Handle patient data update
     },
-    [files]
+    []
   )
 
   const inputRef = useRef<HTMLInputElement>(null)
@@ -78,11 +79,22 @@ export default function EditPatientPage() {
   }
 
   const handleRemoveImageUpload = (index: number) => () => {
-    setFiles((prevFiles) => prevFiles.filter((file, i) => i !== index))
+    setFiles((prevFiles) => prevFiles.filter((_, i) => i !== index))
+  }
+
+  // Function to convert ArrayBuffer to base64 string
+  const arrayBufferToBase64 = (buffer: ArrayBuffer) => {
+    let binary = ''
+    const bytes = new Uint8Array(buffer)
+    const len = bytes.byteLength
+    for (let i = 0; i < len; i++) {
+      binary += String.fromCharCode(bytes[i])
+    }
+    return window.btoa(binary)
   }
 
   return (
-    <section id='add-patient' className='pt-16'>
+    <section id='edit-patient' className='pt-16'>
       <div className='relative px-4 bg-white rounded-xl shadow-pop'>
         <a href='/' className='inline-flex items-center gap-3 text-xl absolute-center-y text-sky-600 hover:scale-105'>
           <FaLongArrowAltLeft className='text-3xl' /> Quay lại
@@ -96,7 +108,7 @@ export default function EditPatientPage() {
           <h1 className='px-4 pb-4 mb-2 text-xl font-bold border-b-4 lg:text-2xl border-slate-400'>
             Thông tin cá nhân
           </h1>
-          <AddForm setFiles={setFiles} files={files} handle={handleUpdate} data={tempData} />
+          <AddForm setFiles={setFiles} files={files} handle={handleUpdate} data={patientData} />
         </div>
         <div className='flex-[3] py-2 bg-white shadow-pop rounded-xl'>
           <input
@@ -121,8 +133,9 @@ export default function EditPatientPage() {
             </button>
           </div>
           <div className='px-4'>
-            {files.length ? (
-              <ImageUploadItem images={files} onRemove={handleRemoveImageUpload} />
+            {/* Display patient images */}
+            {patientImages.length ? (
+              <ImageUploadItem images={patientImages} onRemove={handleRemoveImageUpload} />
             ) : (
               <p className='mt-5 text-xl'>Không có ảnh nào được đăng tải</p>
             )}
@@ -132,3 +145,13 @@ export default function EditPatientPage() {
     </section>
   )
 }
+
+
+
+
+
+
+
+
+
+

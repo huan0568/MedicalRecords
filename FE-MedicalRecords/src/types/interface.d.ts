@@ -19,14 +19,24 @@ interface IImages {
 }
 
 declare interface IPatient extends IUser {
-  address: string
-  haveResult: boolean
-  result: IImageResult[]
-  doctor: string
-  date: string
-  gender: string
-  images: IImages[]
-  doctorComment?: string
+  id_patient: string;
+  name: string;
+  email: string;
+  phone: string;
+  age: number;
+  address: string;
+  create_at: Date;
+  image_eyes: {
+    data: Buffer;
+    contentType: string;
+  };
+  haveResult: boolean;
+  result: IImageResult[];
+  doctor: string;
+  date: string;
+  gender: string;
+  images: IImages[];
+  doctorComment?: string;
 }
 
 declare interface IResFormat<T> {

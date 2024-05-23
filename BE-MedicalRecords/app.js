@@ -10,10 +10,12 @@ mongoose.connect("mongodb+srv://pbl7eye:qOTmUD1LZvazIIiN@pbl7-db.iqtlenz.mongodb
 });
 
 const patientRoutes = require('./routes/patientRoutes');
+const imageRoutes = require('./routes/imageRoutes');
 
 app.use(bodyParser.json());
 app.use(cors()); // Add this line to enable CORS for all routes
 app.use('/patients', patientRoutes);
+app.use('/images', imageRoutes);
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
