@@ -23,28 +23,35 @@ export default function MainImageDiagnose({ images }: IProps) {
     if (e.target.files) {
       const filesArray = Array.from(e.target.files)
       setUploadedImages(filesArray) // Set uploaded images to the new array
+      setCurrentImageIndex(images?.length || 0) // Set index to the first uploaded image
     }
   }
 
   // Handle prediction button click
   const handlePredict = async () => {
     try {
-      if (uploadedImages.length === 0) {
+      let formData = new FormData()
+      
+      if (uploadedImages.length > 0) {
+        // If there are uploaded images, use the currently selected uploaded image
+        formData.append('image', uploadedImages[currentImageIndex - (images?.length || 0)])
+      } else if (images?.length) {
+        // If there are images from the database, fetch the currently selected image
+        const response = await axios.get(images[currentImageIndex], { responseType: 'arraybuffer' })
+        const blob = new Blob([response.data], { type: response.headers['content-type'] })
+        formData.append('image', blob)
+      } else {
         toast.error('Please select an image to predict')
         return
       }
 
-      const formData = new FormData()
-      formData.append('image', uploadedImages[currentImageIndex])
       const response = await axios.post('http://localhost:5000/predict_retinopathy', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       })
 
-      // Inside handlePredict function, after receiving prediction from API
       setPrediction(JSON.stringify(response.data.prediction))
-      // Show prediction result as a toast message
       toast.success(response.data.prediction)
     } catch (error) {
       console.error('Error predicting image:', error)
@@ -88,7 +95,12 @@ export default function MainImageDiagnose({ images }: IProps) {
         {/* Render uploaded images */}
         {uploadedImages.map((file, index) => (
           <div key={index} className='flex-shrink-0 image-container w-28 aspect-square'>
-            <img src={URL.createObjectURL(file)} alt='' className='mb-2 image rounded-xl' />
+            <img
+              onClick={() => setCurrentImageIndex((images?.length || 0) + index)}
+              src={URL.createObjectURL(file)}
+              alt=''
+              className={`mb-2 image rounded-xl ${currentImageIndex === (images?.length || 0) + index && 'border-4 border-sky-600'}`}
+            />
           </div>
         ))}
 
@@ -124,11 +136,14 @@ export default function MainImageDiagnose({ images }: IProps) {
                 </div>
                 <TransformComponent>
                   <div className='bg-white w-[19.5rem] md:w-[27.5rem] h-[19.5rem] md:h-[27.5rem] image-container'>
-                    {/* Dynamically set the src attribute to display the uploaded image */}
                     <img
-                      src={uploadedImages.length > 0 ? URL.createObjectURL(uploadedImages[uploadedImages.length - 1]) : images?.[currentImageIndex] || defaultAvatar}
+                      src={
+                        uploadedImages.length > 0 && currentImageIndex >= (images?.length || 0)
+                          ? URL.createObjectURL(uploadedImages[currentImageIndex - (images?.length || 0)])
+                          : images?.[currentImageIndex] || defaultAvatar
+                      }
                       alt=''
-                      className='object-cover w-full h-full mx-auto '
+                      className='object-cover w-full h-full mx-auto'
                     />
                   </div>
                 </TransformComponent>
@@ -145,8 +160,6 @@ export default function MainImageDiagnose({ images }: IProps) {
     </section>
   )
 }
-
-
 
 
 
