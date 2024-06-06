@@ -11,9 +11,10 @@ import { usePrediction } from '../../../pages/patient/PredictionContext'
 
 interface IProps {
   images?: string[]
+  imageIds?: string[] // Add imageIds prop
 }
 
-export default function MainImageDiagnose({ images }: IProps) {
+export default function MainImageDiagnose({ images, imageIds }: IProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState<number>(0)
   const [uploadedImages, setUploadedImages] = useState<File[]>([])
   const { setPrediction } = usePrediction()
@@ -37,9 +38,11 @@ export default function MainImageDiagnose({ images }: IProps) {
         formData.append('image', uploadedImages[currentImageIndex - (images?.length || 0)])
       } else if (images?.length) {
         // If there are images from the database, fetch the currently selected image
+        const imageId = imageIds?.[currentImageIndex] // Get the corresponding image ID
+        console.log('Image ID:', imageId); // Log the image ID
         const response = await axios.get(images[currentImageIndex], { responseType: 'arraybuffer' })
         const blob = new Blob([response.data], { type: response.headers['content-type'] })
-        formData.append('image', blob)
+        formData.append('image', blob, imageId) // Append image with its ID
       } else {
         toast.error('Please select an image to predict')
         return
@@ -51,8 +54,30 @@ export default function MainImageDiagnose({ images }: IProps) {
         },
       })
 
+      console.log('Prediction response:', response.data) // Log the prediction response
+
+      const predictionValues = response.data.prediction[0]; // Extract the first element of the prediction array
+
+      // Determine the Diabetic_Retinopathy field value
+      const categories = ['Mild', 'Moderate', 'No_DR', 'Proliferate_DR', 'Severe'];
+      const maxIndex = predictionValues.indexOf(Math.max(...predictionValues));
+      const diabeticRetinopathy = categories[maxIndex];
+
+      // Post prediction to the database
+      const postResponse = await axios.post('http://localhost:3001/predictions/create', {
+        id_image: imageIds?.[currentImageIndex], // Associate prediction with image ID
+        mild_value: predictionValues[0],
+        moderate_value: predictionValues[1],
+        noDR_value: predictionValues[2],
+        proliferateDR_value: predictionValues[3],
+        severe_value: predictionValues[4],
+        diabetic_Retinopathy: diabeticRetinopathy, // Include the determined Diabetic_Retinopathy value
+      })
+
+      console.log('Post prediction response:', postResponse.data) // Log the post response
+
       setPrediction(JSON.stringify(response.data.prediction))
-      toast.success(response.data.prediction)
+      toast.success('Prediction successful')
     } catch (error) {
       console.error('Error predicting image:', error)
       toast.error('Error predicting image')

@@ -9,6 +9,7 @@ export default function DiagnosePatientPage() {
   const { id } = useParams<{ id: string }>()
   const [patientData, setPatientData] = useState<IPatient | null>(null)
   const [patientImages, setPatientImages] = useState<string[]>([])
+  const [imageIds, setImageIds] = useState<string[]>([]) // State to store image IDs
 
   useEffect(() => {
     const fetchPatientData = async () => {
@@ -17,7 +18,10 @@ export default function DiagnosePatientPage() {
         setPatientData(patientResponse.data)
 
         const imagesResponse = await axios.get(`http://localhost:3001/images/patient/${id}`)
-        const images = imagesResponse.data.map((img: any) => `data:${img.contentType};base64,${arrayBufferToBase64(img.data.data)}`)
+        const images = imagesResponse.data.map((img: any) => {
+          setImageIds((prevIds) => [...prevIds, img._id]); // Store image ID
+          return `data:${img.contentType};base64,${arrayBufferToBase64(img.data.data)}`
+        });
         setPatientImages(images)
       } catch (error) {
         console.error('Error fetching patient data:', error)
@@ -56,8 +60,8 @@ export default function DiagnosePatientPage() {
           {patientData ? <DetailPatient data={patientData} /> : null}
         </div>
         <div className='flex-1 p-4 mb-4 h-[33rem] bg-white rounded-xl shadow-pop lg:mb-0'>
-          {/* Render MainImageDiagnose component with patientImages */}
-          <MainImageDiagnose images={patientImages} />
+          {/* Pass images and imageIds to MainImageDiagnose */}
+          <MainImageDiagnose images={patientImages} imageIds={imageIds} />
         </div>
         <div className='lg:w-1/5'>
           {/* Render ImageResults and CommentDiagnose components with patientData */}
@@ -72,4 +76,9 @@ export default function DiagnosePatientPage() {
     </section>
   )
 }
+
+
+
+
+
 
