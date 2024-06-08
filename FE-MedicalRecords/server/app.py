@@ -10,7 +10,7 @@ app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
 
 # Load the new model
-new_model = load_model("D://SANG//NAM 4//PBL7//PBL7//FE-MedicalRecords//server//model//modelPBL7_main.h5")
+new_model = load_model("D://SANG//NAM 4//PBL7//PBL7//FE-MedicalRecords//server//model//newmodelPBL7.h5")
 
 # Route for predicting diabetic retinopathy
 @app.route('/predict_retinopathy', methods=['POST'])

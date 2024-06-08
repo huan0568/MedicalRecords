@@ -1,95 +1,108 @@
-import defaultAvatar from '@/assets/default-avatar.png'
-import { useState } from 'react'
-import { AiOutlineMinus } from 'react-icons/ai'
-import { GrPowerReset } from 'react-icons/gr'
-import { IoAddOutline } from 'react-icons/io5'
-import { TransformComponent, TransformWrapper } from 'react-zoom-pan-pinch'
-import axios from 'axios'
-import { toast, ToastContainer } from 'react-toastify'
-import 'react-toastify/dist/ReactToastify.css'
-import { usePrediction } from '../../../pages/patient/PredictionContext'
+import defaultAvatar from '@/assets/default-avatar.png';
+import { useState, useEffect } from 'react';
+import { AiOutlineMinus } from 'react-icons/ai';
+import { GrPowerReset } from 'react-icons/gr';
+import { IoAddOutline } from 'react-icons/io5';
+import { TransformComponent, TransformWrapper } from 'react-zoom-pan-pinch';
+import axios from 'axios';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { usePrediction } from '../../../pages/patient/PredictionContext';
 
 interface IProps {
-  images?: string[]
-  imageIds?: string[] // Add imageIds prop
+  images?: string[];
+  imageIds?: string[];
 }
 
 export default function MainImageDiagnose({ images, imageIds }: IProps) {
-  const [currentImageIndex, setCurrentImageIndex] = useState<number>(0)
-  const [uploadedImages, setUploadedImages] = useState<File[]>([])
-  const { setPrediction } = usePrediction()
+  const [currentImageIndex, setCurrentImageIndex] = useState<number>(0);
+  const [uploadedImages, setUploadedImages] = useState<File[]>([]);
+  const { setPrediction, fetchPredictionResults, setPredictionResults } = usePrediction();
 
-  // Handle file selection event
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        if (imageIds && imageIds[currentImageIndex]) {
+          await fetchPredictionResults(imageIds[currentImageIndex]);
+        }
+      } catch (error) {
+        console.error('Error fetching prediction results:', error);
+      }
+    };
+
+    fetchData();
+  }, [currentImageIndex, imageIds, fetchPredictionResults]);
+
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      const filesArray = Array.from(e.target.files)
-      setUploadedImages(filesArray) // Set uploaded images to the new array
-      setCurrentImageIndex(images?.length || 0) // Set index to the first uploaded image
+      const filesArray = Array.from(e.target.files);
+      setUploadedImages(filesArray);
+      setCurrentImageIndex(images?.length || 0);
     }
-  }
+  };
 
-  // Handle prediction button click
   const handlePredict = async () => {
     try {
-      let formData = new FormData()
-      
+      let formData = new FormData();
+
       if (uploadedImages.length > 0) {
-        // If there are uploaded images, use the currently selected uploaded image
-        formData.append('image', uploadedImages[currentImageIndex - (images?.length || 0)])
+        formData.append('image', uploadedImages[currentImageIndex - (images?.length || 0)]);
       } else if (images?.length) {
-        // If there are images from the database, fetch the currently selected image
-        const imageId = imageIds?.[currentImageIndex] // Get the corresponding image ID
-        console.log('Image ID:', imageId); // Log the image ID
-        const response = await axios.get(images[currentImageIndex], { responseType: 'arraybuffer' })
-        const blob = new Blob([response.data], { type: response.headers['content-type'] })
-        formData.append('image', blob, imageId) // Append image with its ID
+        const imageId = imageIds?.[currentImageIndex];
+        console.log('Image ID:', imageId);
+        const response = await axios.get(images[currentImageIndex], { responseType: 'arraybuffer' });
+        const blob = new Blob([response.data], { type: response.headers['content-type'] });
+        formData.append('image', blob, imageId);
       } else {
-        toast.error('Please select an image to predict')
-        return
+        toast.error('Please select an image to predict');
+        return;
       }
 
       const response = await axios.post('http://localhost:5000/predict_retinopathy', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
-      })
+      });
 
-      console.log('Prediction response:', response.data) // Log the prediction response
+      console.log('Prediction response:', response.data);
 
-      const predictionValues = response.data.prediction[0]; // Extract the first element of the prediction array
-
-      // Determine the Diabetic_Retinopathy field value
+      const predictionValues = response.data.prediction[0];
       const categories = ['Mild', 'Moderate', 'No_DR', 'Proliferate_DR', 'Severe'];
       const maxIndex = predictionValues.indexOf(Math.max(...predictionValues));
       const diabeticRetinopathy = categories[maxIndex];
 
-      // Post prediction to the database
       const postResponse = await axios.post('http://localhost:3001/predictions/create', {
-        id_image: imageIds?.[currentImageIndex], // Associate prediction with image ID
+        id_image: imageIds?.[currentImageIndex],
         mild_value: predictionValues[0],
         moderate_value: predictionValues[1],
         noDR_value: predictionValues[2],
         proliferateDR_value: predictionValues[3],
         severe_value: predictionValues[4],
-        diabetic_Retinopathy: diabeticRetinopathy, // Include the determined Diabetic_Retinopathy value
-      })
+        diabetic_Retinopathy: diabeticRetinopathy,
+      });
 
-      console.log('Post prediction response:', postResponse.data) // Log the post response
+      console.log('Post prediction response:', postResponse.data);
 
-      setPrediction(JSON.stringify(response.data.prediction))
-      toast.success('Prediction successful')
+      setPrediction(JSON.stringify(response.data.prediction));
+      setPredictionResults([]);
+
+      if (imageIds && imageIds[currentImageIndex]) {
+        await fetchPredictionResults(imageIds[currentImageIndex]);
+      }
+
+      toast.success('Prediction successful');
     } catch (error) {
-      console.error('Error predicting image:', error)
-      toast.error('Error predicting image')
+      console.error('Error predicting image:', error);
+      toast.error('Error predicting image');
     }
-  }
+  };
 
   return (
     <section id='main-image' className='h-full gap-2 md:flex'>
-      <ToastContainer /> {/* ToastContainer for displaying toast messages */}
+      <ToastContainer />
       <div className='flex w-full gap-2 mb-4 overflow-auto md:block md:w-40 md:mb-0'>
         {images?.length ? (
-          images?.map((image, index) => (
+          images.map((image, index) => (
             <div key={index} className='flex-shrink-0 image-container w-28 aspect-square'>
               <img
                 onClick={() => setCurrentImageIndex(index)}
@@ -117,7 +130,6 @@ export default function MainImageDiagnose({ images, imageIds }: IProps) {
             </p>
           </div>
         )}
-        {/* Render uploaded images */}
         {uploadedImages.map((file, index) => (
           <div key={index} className='flex-shrink-0 image-container w-28 aspect-square'>
             <img
@@ -129,7 +141,6 @@ export default function MainImageDiagnose({ images, imageIds }: IProps) {
           </div>
         ))}
 
-        {/* Input for uploading images */}
         <div className='flex-shrink-0 image-container w-28 aspect-square'>
           <input type='file' accept='image/*' multiple onChange={handleFileSelect} className='hidden' id='upload-image' />
           <label htmlFor='upload-image' className='mb-2 image rounded-xl cursor-pointer'>
@@ -183,8 +194,9 @@ export default function MainImageDiagnose({ images, imageIds }: IProps) {
         </div>
       </div>
     </section>
-  )
+  );
 }
+
 
 
 
