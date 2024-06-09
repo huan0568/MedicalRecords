@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { usePrediction } from '../../../pages/patient/PredictionContext';
 
 // Define the default titles
@@ -6,22 +6,29 @@ const defaultTitles = ['Mild', 'Moderate', 'No_DR', 'Proliferate_DR', 'Severe', 
 
 interface IProps {
   isShow?: boolean;
+  notActive?:boolean
 }
 
-const ImageResults: React.FC<IProps> = ({ isShow }) => {
+
+const ImageResults: React.FC<IProps> = ({ isShow,notActive }) => {
+  const[confirm, setConfirm] = useState<number>(0)
   const { prediction } = usePrediction();
   
+  const isConfirm = (confirm:number, index:number) => !!confirm && confirm !== index
+
+
   // Function to format the prediction values with corresponding titles
   const formatPrediction = (title:string, index:number) => {
+    console.log(isConfirm(confirm, index))
     // Remove the condition that checks for !prediction
     const predictionValues = prediction.slice(2, -2).split(',').map(parseFloat); // Adjust slicing to include all values correctly
     const maxIndex = predictionValues.indexOf(Math.max(...predictionValues)); // Find the index of the maximum value
     const maxTitle = defaultTitles[maxIndex]; // Get the corresponding title with the maximum value
     
     return (
-      <div className="grid grid-cols-7 gap-0 border border-slate-400">
+      <div className="grid grid-cols-7 gap-0 border-t border-slate-400">
         {/* Adjust the width of the title */}
-        <div className='col-span-3 flex-shrink-0 w-full px-2 '>
+        <div className='col-span-3 flex-center-y flex-shrink-0 w-full px-2 '>
           <h4 className='mr-4 '>{title}</h4>
         </div>
         {/* Render the prediction value for each title */}
@@ -42,6 +49,8 @@ const ImageResults: React.FC<IProps> = ({ isShow }) => {
           <div className="col-span-1 flex-center">
           <input type="checkbox"
             className='w-5 h-5'
+            onClick={() => setConfirm(!confirm ? index : 0)}
+            disabled={notActive || isConfirm(confirm, index)}
           />
           </div>
       </div>
@@ -50,12 +59,12 @@ const ImageResults: React.FC<IProps> = ({ isShow }) => {
   
   return (
     <section id='image-result' className='pt-3 mb-4 bg-white rounded-xl shadow-pop'>
-      <h1 className='px-4 pb-2 mb-2 text-xl font-bold text-center border-b-2 border-slate-400'>Kết quả ảnh</h1>
+      <h1 className='px-4 pb-2 text-xl font-bold text-center'>Kết quả ảnh</h1>
 
       {/* Render formatted prediction values */}
       {
         defaultTitles.map((title, index) => {
-          return formatPrediction(title, index)
+          return formatPrediction(title, index + 1)
             
         })
       }

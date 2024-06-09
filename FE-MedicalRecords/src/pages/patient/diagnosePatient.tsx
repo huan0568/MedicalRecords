@@ -29,7 +29,9 @@ export default function DiagnosePatientPage() {
           <MainImageDiagnose images={tempData?.images} />
         </div>
         <div className='lg:w-1/5'>
-          <ImageResults data={tempData as IPatient} />
+          <ImageResults data={tempData as IPatient}
+            
+          />
           <CommentDiagnose data={tempData as IPatient} />
         </div>
       </div>
