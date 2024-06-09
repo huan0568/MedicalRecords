@@ -19,9 +19,9 @@ export default function DiagnosePatientPage() {
 
         const imagesResponse = await axios.get(`http://localhost:3001/images/patient/${id}`)
         const images = imagesResponse.data.map((img: any) => {
-          setImageIds((prevIds) => [...prevIds, img._id]); // Store image ID
+          setImageIds((prevIds) => [...prevIds, img._id]) // Store image ID
           return `data:${img.contentType};base64,${arrayBufferToBase64(img.data.data)}`
-        });
+        })
         setPatientImages(images)
       } catch (error) {
         console.error('Error fetching patient data:', error)
@@ -64,18 +64,14 @@ export default function DiagnosePatientPage() {
           <MainImageDiagnose images={patientImages} imageIds={imageIds} />
         </div>
         <div className='lg:w-1/5'>
-          <ImageResults data={tempData as IPatient}
-            
-          />
-          <CommentDiagnose data={tempData as IPatient} />
+          {patientData ? (
+            <>
+              <ImageResults data={patientData} />
+              <CommentDiagnose data={patientData} />
+            </>
+          ) : null}
         </div>
       </div>
     </section>
   )
 }
-
-
-
-
-
-
