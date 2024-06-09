@@ -1,17 +1,17 @@
 import AddForm from '@/components/patient/form/addForm'
 import ImageUploadItem from '@/components/patient/form/imageUpload'
 import { toastError, toastSuccess } from '@/utils/toast'
-import { useCallback, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { BsImages } from 'react-icons/bs'
 import { FaLongArrowAltLeft } from 'react-icons/fa'
 
 export interface FormData {
   name: string
-  phone: number
+  phone: string
   email: string
   age: number
   address: string
-  images: string[]
+  images: File[]
 }
 
 export default function AddPatientPage() {
@@ -22,22 +22,50 @@ export default function AddPatientPage() {
       // Generate a random 6-digit number
       const id_patient = Math.floor(100000 + Math.random() * 900000);
   
-      // Add the id_patient field at the top of the data object
-      const newData = { id_patient: String(id_patient), ...data };
+      const patientData = {
+        id_patient,
+        name: data.name,
+        phone: data.phone,
+        email: data.email,
+        age: data.age,
+        address: data.address
+      };
   
       const response = await fetch('http://localhost:3001/patients/create', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(newData), // Send newData instead of data
+        body: JSON.stringify(patientData),
       });
   
       if (!response.ok) {
         const errorData: { error: string } = await response.json();
         throw new Error(errorData.error);
       }
-      
+  
+      if (files.length) {
+        const uploadPromises = files.map((file) => {
+          const imageFormData = new FormData();
+          imageFormData.append('id_patient', String(id_patient));
+          imageFormData.append('image_eyes', file);
+
+          return fetch('http://localhost:3001/images/upload', {
+            method: 'POST',
+            body: imageFormData,
+          });
+        });
+
+        const imageResponses = await Promise.all(uploadPromises);
+
+        imageResponses.forEach(async (response) => {
+          if (!response.ok) {
+            const errorData: { error: string } = await response.json();
+            throw new Error(errorData.error);
+          }
+        });
+      }
+  
       toastSuccess('Thêm bệnh nhân thành công');
     } catch (error) {
       toastError((error as Error).message);
@@ -54,16 +82,8 @@ export default function AddPatientPage() {
 
   const handleChangeUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      let pass = true
       const newFiles = Array.from(e.target.files)
-      newFiles.forEach((file) => {
-        if (!file.type.includes('image')) {
-          pass = false
-        }
-      })
-      if (pass) {
-        setFiles([...files, ...newFiles])
-      }
+      setFiles(newFiles)
     }
   }
 
@@ -123,3 +143,8 @@ export default function AddPatientPage() {
     </section>
   )
 }
+
+
+
+
+

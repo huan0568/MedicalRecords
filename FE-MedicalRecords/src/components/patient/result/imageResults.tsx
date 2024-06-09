@@ -41,7 +41,7 @@ const ImageResults: React.FC<IProps> = ({ isShow,notActive }) => {
             <p className="mr-2">{predictionValues[index] ? predictionValues[index].toFixed(3) : ''}</p> 
             {/* Render the green dot */}
             <div className='flex items-center ml-auto'>
-              <div className={`flex-shrink-0 w-5 aspect-square rounded-full ${index === maxIndex ? 'bg-red-500' : 'bg-green-500'}`} />
+              <div className={`flex-shrink-0 w-5 aspect-square rounded-full bg-gray-200`} />
             </div>
           </>
         )}
@@ -73,6 +73,8 @@ const ImageResults: React.FC<IProps> = ({ isShow,notActive }) => {
 };
 
 export default ImageResults;
+
+
 
 
 
