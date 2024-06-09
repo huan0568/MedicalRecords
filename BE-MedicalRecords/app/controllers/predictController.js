@@ -3,6 +3,7 @@ const Predict = require('../models/Predict');
 
 exports.createPrediction = async (req, res) => {
     try {
+        console.log('createPrediction')
         const { id_image, mild_value, moderate_value, noDR_value, proliferateDR_value, severe_value, diabetic_Retinopathy } = req.body;
 
         const newPrediction = new Predict({
@@ -18,6 +19,7 @@ exports.createPrediction = async (req, res) => {
         await newPrediction.save();
         res.status(201).json(newPrediction);
     } catch (error) {
+        console.log(error)
         res.status(400).json({ error: error.message });
     }
 };
