@@ -1,34 +1,60 @@
-import defaultAvatar from '@/assets/default-avatar.png';
-import { useState, useEffect } from 'react';
-import { AiOutlineMinus } from 'react-icons/ai';
-import { GrPowerReset } from 'react-icons/gr';
-import { IoAddOutline } from 'react-icons/io5';
-import { TransformComponent, TransformWrapper } from 'react-zoom-pan-pinch';
-import axios from 'axios';
-import { toast, ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import { usePrediction } from '../../../pages/patient/PredictionContext';
+import defaultAvatar from '@/assets/default-avatar.png'
+import { useState } from 'react'
+import { AiOutlineMinus } from 'react-icons/ai'
+import { GrPowerReset } from 'react-icons/gr'
+import { IoAddOutline } from 'react-icons/io5'
+import { TransformComponent, TransformWrapper } from 'react-zoom-pan-pinch'
+import axios from 'axios'
+import { toast, ToastContainer } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
+import { usePrediction } from '../../../pages/patient/PredictionContext'
 
 interface IProps {
   images?: string[];
   imageIds?: string[];
 }
 
-export default function MainImageDiagnose({ images, imageIds }: IProps) {
-  const [currentImageIndex, setCurrentImageIndex] = useState<number>(0);
-  const [uploadedImages, setUploadedImages] = useState<File[]>([]);
-  const { setPrediction, fetchPredictionResults, setPredictionResults } = usePrediction();
+export default function MainImageDiagnose({ images }: IProps) {
+  const [currentImageIndex, setCurrentImageIndex] = useState<number>(0)
+  const [uploadedImages, setUploadedImages] = useState<File[]>([])
+  const [currentType, setCurrentType] = useState<string>('UFI')
+  const { setPrediction } = usePrediction()
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        if (imageIds && imageIds[currentImageIndex]) {
-          await fetchPredictionResults(imageIds[currentImageIndex]);
-        }
-      } catch (error) {
-        console.error('Error fetching prediction results:', error);
+  // Handle file selection event
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const filesArray = Array.from(e.target.files)
+      setUploadedImages(filesArray) // Set uploaded images to the new array
+    }
+  }
+
+  // Handle prediction button click
+  const handlePredict = async () => {
+    try {
+      if (uploadedImages.length === 0) {
+        toast.error('Please select an image to predict')
+        return
       }
-    };
+
+      const formData = new FormData()
+      formData.append('image', uploadedImages[currentImageIndex])
+      const response = await axios.post('http://localhost:5000/predict_retinopathy', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      })
+
+      // Inside handlePredict function, after receiving prediction from API
+      setPrediction(JSON.stringify(response.data.prediction))
+      // Show prediction result as a toast message
+      toast.success(response.data.prediction)
+    } catch (error) {
+      console.error('Error predicting image:', error)
+      toast.error('Error predicting image')
+    }
+  }
+
+  const handleSwitImgType = (type: string) => setCurrentType(type)
 
     fetchData();
   }, [currentImageIndex, imageIds, fetchPredictionResults]);
@@ -142,7 +168,14 @@ export default function MainImageDiagnose({ images, imageIds }: IProps) {
         ))}
 
         <div className='flex-shrink-0 image-container w-28 aspect-square'>
-          <input type='file' accept='image/*' multiple onChange={handleFileSelect} className='hidden' id='upload-image' />
+          <input
+            type='file'
+            accept='image/*'
+            multiple
+            onChange={handleFileSelect}
+            className='hidden'
+            id='upload-image'
+          />
           <label htmlFor='upload-image' className='mb-2 image rounded-xl cursor-pointer'>
             <span className='flex items-center justify-center w-full h-full'>
               <IoAddOutline className='text-4xl text-gray-500' />
@@ -153,7 +186,6 @@ export default function MainImageDiagnose({ images, imageIds }: IProps) {
           </p>
         </div>
       </div>
-
       <div className='w-full'>
         <div className='relative bg-black rounded-lg flex-center'>
           <TransformWrapper initialScale={1}>
@@ -174,9 +206,9 @@ export default function MainImageDiagnose({ images, imageIds }: IProps) {
                   <div className='bg-white w-[19.5rem] md:w-[27.5rem] h-[19.5rem] md:h-[27.5rem] image-container'>
                     <img
                       src={
-                        uploadedImages.length > 0 && currentImageIndex >= (images?.length || 0)
-                          ? URL.createObjectURL(uploadedImages[currentImageIndex - (images?.length || 0)])
-                          : images?.[currentImageIndex] || defaultAvatar
+                        uploadedImages.length > 0
+                          ? URL.createObjectURL(uploadedImages[uploadedImages.length - 1])
+                          : images?.[currentImageIndex]?.url || defaultAvatar
                       }
                       alt=''
                       className='object-cover w-full h-full mx-auto'
@@ -187,19 +219,30 @@ export default function MainImageDiagnose({ images, imageIds }: IProps) {
             )}
           </TransformWrapper>
         </div>
-        <div className='mt-4 flex-center-x'>
-          <button className='px-4 py-2 h-full font-bold text-white flex-shrink-0 rounded-lg bg-sky-600 sm:py-2.5 hover:scale-105' onClick={handlePredict}>
+        <div className='mt-4 flex-center-x relative'>
+          <button
+            className='px-4 py-2 h-full font-bold text-white flex-shrink-0 rounded-lg bg-sky-600 sm:py-2.5 hover:scale-105'
+            onClick={handlePredict}
+          >
             Chuẩn đoán
           </button>
+          <div className='absolute right-0 border-2 inset-y-0 border border-slate-400 rounded-xl flex-center-y overflow-hidden'>
+            <button
+              onClick={() => handleSwitImgType('UFI')}
+              className={`${currentType === 'UFI' ? 'bg-slate-500 text-white' : 'bg-slate-300'} px-4 py-2 h-full rounded-l-lg `}
+            >
+              UFI
+            </button>
+            <div className='h-full w-0.5 bg-slate-400' />
+            <button
+              onClick={() => handleSwitImgType('CFI')}
+              className={`${currentType === 'CFI' ? 'bg-slate-500 text-white' : 'bg-slate-300'} px-4 py-2 h-full rounded-r-lg`}
+            >
+              CFI
+            </button>
+          </div>
         </div>
       </div>
     </section>
   );
 }
-
-
-
-
-
-
-

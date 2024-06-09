@@ -64,13 +64,10 @@ export default function DiagnosePatientPage() {
           <MainImageDiagnose images={patientImages} imageIds={imageIds} />
         </div>
         <div className='lg:w-1/5'>
-          {/* Render ImageResults and CommentDiagnose components with patientData */}
-          {patientData ? (
-            <>
-              <ImageResults data={patientData} />
-              <CommentDiagnose data={patientData} />
-            </>
-          ) : null}
+          <ImageResults data={tempData as IPatient}
+            
+          />
+          <CommentDiagnose data={tempData as IPatient} />
         </div>
       </div>
     </section>
