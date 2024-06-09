@@ -22,3 +22,11 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Env
+.env
+
+# Yarn
+yarn-error.log
+yarn.lock
+.yarn
