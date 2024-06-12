@@ -7,6 +7,7 @@ const ImageSchema = new Schema({
     data: Buffer,
     contentType: String,
     created_at: { type: Date, default: Date.now },
+    isGrayImage: { type: Boolean, default: false },
 });
 
 module.exports = mongoose.model('Image', ImageSchema);

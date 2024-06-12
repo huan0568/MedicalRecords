@@ -28,7 +28,7 @@ export default function ResultPatientPage() {
           <MainImage images={tempData?.images} />
         </div>
         <div className='lg:w-1/5'>
-          <ImageResults data={tempData as IPatient} isShow={true} notActive />
+          <ImageResults data={tempData as IPatient} isShow={true} />
           <CommentDoctor data={tempData as IPatient} />
         </div>
       </div>

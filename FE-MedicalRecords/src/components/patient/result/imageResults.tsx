@@ -1,10 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import { usePrediction } from '../../../pages/patient/PredictionContext'
 
-// Define the default titles
 const defaultTitles = ['Mild', 'Moderate', 'No_DR', 'Proliferate_DR', 'Severe', 'Diabetic Retinopathy']
 
-// Define a mapping object for lowercase titles to keys in predictionValues
 const titleToKeyMapping: { [key: string]: string } = {
   mild: 'mild_value',
   moderate: 'moderate_value',
@@ -13,66 +11,170 @@ const titleToKeyMapping: { [key: string]: string } = {
   severe: 'severe_value'
 }
 
-interface IProps {
-  isShow?: boolean
-  notActive?: boolean
+interface ImageResultsProps {
+  savedValues: { [key: string]: string }
+  setSavedValues: React.Dispatch<React.SetStateAction<{ [key: string]: string }>>
 }
 
-const ImageResults: React.FC<IProps> = ({ isShow, notActive }) => {
-  const [confirm, setConfirm] = useState<number>(0)
-  const { prediction } = usePrediction()
+const ImageResults: React.FC<ImageResultsProps> = ({ savedValues, setSavedValues }) => {
+  const { predictionResults } = usePrediction()
+  const [formattedPrediction, setFormattedPrediction] = useState<JSX.Element[]>([])
+  const [checkedIndex, setCheckedIndex] = useState<number>(0)
+  const [isEditing, setIsEditing] = useState<boolean>(false)
+  const [editValues, setEditValues] = useState<{ [key: string]: string }>({})
 
-  const isConfirm = (confirm: number, index: number) => !!confirm && confirm !== index
+  const isConfirm = (checkedIndex: number, index: number) => !!checkedIndex && checkedIndex !== index
+  console.log(checkedIndex)
+  useEffect(() => {
+    if (predictionResults && predictionResults.length > 0) {
+      const initialEditValues: { [key: string]: string } = {}
+      defaultTitles.forEach((title) => {
+        const key = titleToKeyMapping[title.toLowerCase()]
+        initialEditValues[title] = parseFloat(predictionResults[0][key] || 0).toFixed(3)
+      })
+      setEditValues(initialEditValues)
+      setSavedValues(initialEditValues)
+    }
+  }, [predictionResults, setSavedValues])
 
-  // Function to format the prediction values with corresponding titles
-  const formatPrediction = (title: string, index: number) => {
-    console.log(isConfirm(confirm, index))
-    // Remove the condition that checks for !prediction
-    const predictionValues = prediction.slice(2, -2).split(',').map(parseFloat) // Adjust slicing to include all values correctly
-    const maxIndex = predictionValues.indexOf(Math.max(...predictionValues)) // Find the index of the maximum value
-    const maxTitle = defaultTitles[maxIndex] // Get the corresponding title with the maximum value
-
-    return (
-      <div className='grid grid-cols-7 gap-0 border-t border-slate-400'>
-        {/* Adjust the width of the title */}
-        <div className='col-span-3 flex-center-y flex-shrink-0 w-full px-2 '>
-          <h4 className='mr-4 '>{title}</h4>
-        </div>
-        {/* Render the prediction value for each title */}
-
-        <div className='col-span-3 border-x border-stale-400 flex-center pr-2 py-2'>
-          {title === 'Diabetic Retinopathy' ? (
-            <p className='mr-2'> {maxTitle}</p> // Display the title with the maximum value
-          ) : (
-            <>
-              <p className='mr-2'>{predictionValues[index] ? predictionValues[index].toFixed(3) : ''}</p>
-              {/* Render the green dot */}
-              <div className='flex items-center ml-auto'>
-                <div className={`flex-shrink-0 w-5 aspect-square rounded-full bg-gray-200`} />
-              </div>
-            </>
-          )}
-        </div>
-        <div className='col-span-1 flex-center'>
-          <input
-            type='checkbox'
-            className='w-5 h-5'
-            onClick={() => setConfirm(!confirm ? index : 0)}
-            disabled={notActive || isConfirm(confirm, index)}
-          />
-        </div>
-      </div>
-    )
+  const handleEditChange = (title: string, value: string) => {
+    setEditValues((prevValues) => ({
+      ...prevValues,
+      [title]: value
+    }))
   }
+
+  const handleSave = () => {
+    const newSavedValues = {
+      ...editValues,
+      'Diabetic Retinopathy': defaultTitles[checkedIndex ?? 0] // Ensure the defaultTitles array is used to set the Diabetic Retinopathy based on the checked index
+    }
+    setSavedValues(newSavedValues)
+    setIsEditing(false)
+  }
+
+  useEffect(() => {
+    const formatPrediction = () => {
+      if (predictionResults && predictionResults.length > 0) {
+        const values = defaultTitles.map((title) => {
+          const key = titleToKeyMapping[title.toLowerCase()]
+          return parseFloat(predictionResults[0][key] || 0)
+        })
+
+        const maxIndex = values.indexOf(Math.max(...values))
+
+        const formattedData = defaultTitles.map((title, index) => {
+          const key = titleToKeyMapping[title.toLowerCase()]
+          const value = savedValues[title] || editValues[title] || ''
+          return (
+            <div key={title} className='px-4 border-b flex-center-y border-slate-400'>
+              <div className='w-32 flex-shrink-0'>
+                <h4 className='py-2 mr-4 border-r border-slate-400 overflow-hidden'>{title}</h4>
+              </div>
+              {isEditing ? (
+                <input
+                  type='text'
+                  className='mr-2 border border-gray-300 rounded w-20'
+                  value={editValues[title]}
+                  onChange={(e) => handleEditChange(title, e.target.value)}
+                />
+              ) : (
+                <p className='mr-2'>{isNaN(parseFloat(value)) ? '' : value}</p>
+              )}
+              <div className='flex items-center ml-auto'>
+                <div
+                  className={`flex-shrink-0 w-5 aspect-square rounded-full ${index === maxIndex ? 'bg-red-500' : 'bg-green-500'}`}
+                />
+              </div>
+              <input
+                type='checkbox'
+                className='ml-2 w-6 h-6'
+                onClick={() => setCheckedIndex(!checkedIndex ? index + 1 : 0)}
+                disabled={isConfirm(checkedIndex, index + 1)}
+              />
+            </div>
+          )
+        })
+
+        formattedData[formattedData.length - 1] = (
+          <div key={defaultTitles[defaultTitles.length - 1]} className='px-4 border-b flex-center-y border-slate-400'>
+            <div className='w-32 flex-shrink-0'>
+              <h4 className='py-2 mr-4 border-r border-slate-400 overflow-hidden'>
+                {defaultTitles[defaultTitles.length - 1]}
+              </h4>
+            </div>
+            <p className='mr-2'>{defaultTitles[checkedIndex ?? maxIndex]}</p>
+            <div className='flex items-center ml-auto'>
+              <div className={`flex-shrink-0 w-5 aspect-square rounded-full bg-gray-200`} />
+            </div>
+            <div className='ml-2 w-6 h-6' />
+            {/* <input
+              type='checkbox'
+              className='ml-2 w-6 h-6'
+              checked={checkedIndex === defaultTitles.length - 1}
+              onChange={() => setCheckedIndex(defaultTitles.length - 1)}
+            /> */}
+          </div>
+        )
+
+        setFormattedPrediction(formattedData)
+      } else {
+        // If no results, display empty table
+        const emptyTable = defaultTitles.map((title, index) => (
+          <div key={title} className='px-4 border-b flex-center-y border-slate-400'>
+            <div className='w-32 flex-shrink-0'>
+              <h4 className='py-2 mr-4 border-r border-slate-400 overflow-hidden'>{title}</h4>
+            </div>
+            <p className='mr-2'></p>
+            <div className='flex items-center ml-auto'>
+              <div className={`flex-shrink-0 w-5 aspect-square rounded-full bg-gray-200`} />
+            </div>
+            <input
+              type='checkbox'
+              className='ml-2 w-6 h-6'
+              // checked={checkedIndex === index}
+              onChange={() => setCheckedIndex(index)}
+            />
+          </div>
+        ))
+
+        setFormattedPrediction(emptyTable)
+      }
+    }
+
+    formatPrediction()
+  }, [predictionResults, checkedIndex, isEditing, editValues, savedValues])
 
   return (
     <section id='image-result' className='pt-3 mb-4 bg-white rounded-xl shadow-pop'>
-      <h1 className='px-4 pb-2 text-xl font-bold text-center'>Kết quả ảnh</h1>
-
-      {/* Render formatted prediction values */}
-      {defaultTitles.map((title, index) => {
-        return formatPrediction(title, index + 1)
-      })}
+      <div className='px-4 pb-2 mb-2 flex justify-between items-center border-b-2 border-slate-400'>
+        <h1 className='text-xl font-bold'>Kết quả ảnh</h1>
+        <button
+          onClick={isEditing ? handleSave : () => setIsEditing(true)}
+          className='flex-shrink-0 px-4 py-2 font-bold text-white rounded-lg bg-sky-600 hover:scale-105'
+        >
+          {isEditing ? 'Lưu' : 'Chỉnh sửa'}
+        </button>
+      </div>
+      {formattedPrediction.length > 0 ? (
+        formattedPrediction
+      ) : (
+        <div className='px-4 border-b flex-center-y border-slate-400'>
+          <div className='w-32 flex-shrink-0'>
+            <h4 className='py-2 mr-4 border-r border-slate-400 overflow-hidden'>No results</h4>
+          </div>
+          <p className='mr-2'></p>
+          <div className='flex items-center ml-auto'>
+            <div className={`flex-shrink-0 w-5 aspect-square rounded-full bg-gray-200`} />
+          </div>
+          {/* <input
+            type='checkbox'
+            className='ml-2 w-6 h-6'
+            checked={checkedIndex === null}
+            onChange={() => setCheckedIndex(null)}
+          /> */}
+        </div>
+      )}
     </section>
   )
 }

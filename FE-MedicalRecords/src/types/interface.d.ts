@@ -31,6 +31,7 @@ declare interface IPatient extends IUser {
     contentType: string;
   };
   haveResult: boolean;
+  is_result: boolean
   result: IImageResult[];
   doctor: string;
   date: string;

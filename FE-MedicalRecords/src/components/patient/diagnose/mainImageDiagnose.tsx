@@ -1,5 +1,5 @@
 import defaultAvatar from '@/assets/default-avatar.png'
-import { useEffect, useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { AiOutlineMinus } from 'react-icons/ai'
 import { GrPowerReset } from 'react-icons/gr'
 import { IoAddOutline } from 'react-icons/io5'
@@ -12,13 +12,52 @@ import { usePrediction } from '../../../pages/patient/PredictionContext'
 interface IProps {
   images?: string[]
   imageIds?: string[]
+  id: string // Define the id property
+  setCurrentImageId: (id: string | null) => void
 }
 
-export default function MainImageDiagnose({ images, imageIds }: IProps) {
+export default function MainImageDiagnose({ images, imageIds, id, setCurrentImageId }: IProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState<number>(0)
   const [uploadedImages, setUploadedImages] = useState<File[]>([])
-  const [currentType, setCurrentType] = useState<string>('UFI')
   const { setPrediction, fetchPredictionResults, setPredictionResults } = usePrediction()
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [currentType, setCurrentType] = useState<string>('UFI')
+  const handleSwitImgType = (type: string) => setCurrentType(type)
+
+  useEffect(() => {
+    if (imageIds && imageIds[currentImageIndex]) {
+      setCurrentImageId(imageIds[currentImageIndex]) // Reference to setCurrentImageId
+    }
+  }, [currentImageIndex, imageIds, setCurrentImageId])
+
+  const handleUpload = async () => {
+    try {
+      console.log('Attempting to upload...')
+      if (fileInputRef.current && fileInputRef.current.files) {
+        console.log('Starting upload process...')
+        const formData = new FormData()
+        Array.from(fileInputRef.current.files).forEach((file) => {
+          formData.append('id_patient', id) // Append id_patient
+          formData.append('image_eyes', file)
+        })
+        console.log('FormData:', formData)
+
+        const response = await axios.post('http://localhost:3001/images/upload', formData)
+        console.log('Upload response:', response)
+
+        if (response.status >= 200 && response.status < 300) {
+          toast.success('Image(s) uploaded successfully')
+        } else {
+          toast.error('Failed to upload image(s)')
+        }
+      } else {
+        toast.error('Please select image(s) to upload')
+      }
+    } catch (error) {
+      console.error('Error uploading image(s):', error)
+      toast.error('Error uploading image(s)')
+    }
+  }
 
   useEffect(() => {
     const fetchData = async () => {
@@ -34,16 +73,16 @@ export default function MainImageDiagnose({ images, imageIds }: IProps) {
     fetchData()
   }, [currentImageIndex, imageIds, fetchPredictionResults])
 
-  // Handle file selection event
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const filesArray = Array.from(e.target.files)
       setUploadedImages(filesArray)
       setCurrentImageIndex(images?.length || 0)
+      // Immediately trigger the upload process
+      handleUpload()
     }
   }
 
-  // Handle prediction button click
   const handlePredict = async () => {
     try {
       let formData = new FormData()
@@ -100,29 +139,26 @@ export default function MainImageDiagnose({ images, imageIds }: IProps) {
     }
   }
 
-  const handleSwitImgType = (type: string) => setCurrentType(type)
-
-  console.log(images)
-
   return (
     <section id='main-image' className='h-full gap-2 md:flex'>
-      <ToastContainer /> {/* ToastContainer for displaying toast messages */}
+      <ToastContainer />
       <div className='flex w-full gap-2 mb-4 overflow-auto md:block md:w-40 md:mb-0'>
         {images?.length ? (
-          images?.map((image, index) => (
-            <div key={image.id} className='flex-shrink-0 image-container w-28 aspect-square'>
+          images.map((image, index) => (
+            <div key={index} className='flex-shrink-0 image-container w-28 aspect-square'>
               <img
                 onClick={() => setCurrentImageIndex(index)}
-                src={image.url || defaultAvatar}
+                src={image || defaultAvatar}
                 alt=''
-                className={`mb-2 image rounded-xl ${currentImageIndex === index && 'border-4 border-sky-600'}`}
+                className={`mb-2 image rounded-xl ${currentImageIndex === index && 'border-4 border-sky-600'}
+                ${currentType === 'CFI' && 'grayscale'}`}
               />
               <p
                 className={`
-              ${currentImageIndex === index ? 'bottom-1 w-[calc(100%-7.5px)] rounded-b-lg' : 'bottom-0 w-full rounded-b-xl'}
-               text-center text-white bg-black bg-opacity-50 line-clamp-1 absolute-center-x`}
+                ${currentImageIndex === index ? 'bottom-1 w-[calc(100%-7.5px)] rounded-b-lg' : 'bottom-0 w-full rounded-b-xl'}
+                text-center text-white bg-black bg-opacity-50 line-clamp-1 absolute-center-x`}
               >
-                {image.title}
+                {`Image ${index + 1}`}
               </p>
             </div>
           ))
@@ -131,20 +167,23 @@ export default function MainImageDiagnose({ images, imageIds }: IProps) {
             <img src={defaultAvatar} alt='' className='mb-2 image rounded-xl' />
             <p
               className={`
-               text-center text-white bottom-0 w-full rounded-b-xl bg-black bg-opacity-50 line-clamp-1 absolute-center-x`}
+              text-center text-white bottom-0 w-full rounded-b-xl bg-black bg-opacity-50 line-clamp-1 absolute-center-x`}
             >
               Không có ảnh
             </p>
           </div>
         )}
-        {/* Render uploaded images */}
         {uploadedImages.map((file, index) => (
           <div key={index} className='flex-shrink-0 image-container w-28 aspect-square'>
-            <img src={URL.createObjectURL(file)} alt='' className='mb-2 image rounded-xl' />
+            <img
+              onClick={() => setCurrentImageIndex((images?.length || 0) + index)}
+              src={URL.createObjectURL(file)}
+              alt=''
+              className={`mb-2 image rounded-xl ${currentImageIndex === (images?.length || 0) + index && 'border-4 border-sky-600'}`}
+            />
           </div>
         ))}
 
-        {/* Input for uploading images */}
         <div className='flex-shrink-0 image-container w-28 aspect-square'>
           <input
             type='file'
@@ -153,17 +192,22 @@ export default function MainImageDiagnose({ images, imageIds }: IProps) {
             onChange={handleFileSelect}
             className='hidden'
             id='upload-image'
+            ref={fileInputRef}
           />
           <label htmlFor='upload-image' className='mb-2 image rounded-xl cursor-pointer'>
             <span className='flex items-center justify-center w-full h-full'>
               <IoAddOutline className='text-4xl text-gray-500' />
             </span>
           </label>
-          <p className='text-center text-white bottom-0 w-full rounded-b-xl bg-black bg-opacity-50 line-clamp-1 absolute-center-x'>
+          <p
+            className='text-center text-white bottom-0 w-full rounded-b-xl bg-black bg-opacity-50 line-clamp-1 absolute-center-x'
+            onClick={handleUpload}
+          >
             Tải lên
           </p>
         </div>
       </div>
+
       <div className='w-full'>
         <div className='relative bg-black rounded-lg flex-center'>
           <TransformWrapper initialScale={1}>
@@ -182,15 +226,17 @@ export default function MainImageDiagnose({ images, imageIds }: IProps) {
                 </div>
                 <TransformComponent>
                   <div className='bg-white w-[19.5rem] md:w-[27.5rem] h-[19.5rem] md:h-[27.5rem] image-container'>
-                    {/* Dynamically set the src attribute to display the uploaded image */}
                     <img
                       src={
-                        uploadedImages.length > 0
-                          ? URL.createObjectURL(uploadedImages[uploadedImages.length - 1])
-                          : images?.[currentImageIndex]?.url || defaultAvatar
+                        uploadedImages.length > 0 && currentImageIndex >= (images?.length || 0)
+                          ? URL.createObjectURL(uploadedImages[currentImageIndex - (images?.length || 0)])
+                          : images?.[currentImageIndex] || defaultAvatar
                       }
                       alt=''
-                      className='object-cover w-full h-full mx-auto '
+                      className={`object-cover w-full h-full mx-auto 
+                ${currentType === 'CFI' && 'grayscale'}
+                        
+                        `}
                     />
                   </div>
                 </TransformComponent>

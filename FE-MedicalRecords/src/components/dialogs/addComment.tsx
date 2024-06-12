@@ -1,13 +1,17 @@
-import { Dialog } from '@headlessui/react'
+import { Dialog } from '@headlessui/react';
 
 interface IProps {
-  comment: string
-  setComment: (value: string) => void
-  openComment: boolean
-  setOpenComment: () => void
+  comment: string;
+  setComment: (value: string) => void;
+  openComment: boolean;
+  setOpenComment: () => void;
 }
 
 export default function AddComment({ openComment, setOpenComment, setComment, comment }: IProps) {
+  const handleCommentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setComment(e.target.value);
+  };
+
   return (
     <div>
       <Dialog open={openComment} onClose={() => setOpenComment()} className='relative z-50'>
@@ -19,7 +23,7 @@ export default function AddComment({ openComment, setOpenComment, setComment, co
             <textarea
               value={comment}
               rows={6}
-              onChange={(e) => setComment(e.target.value)}
+              onChange={handleCommentChange}
               className='w-full py-2.5 px-4 mb-4 border border-black rounded-xl'
               placeholder='Ví dụ: Bệnh nhân mắc bệnh gì? Cần chú ý điều gì? '
             />
@@ -43,5 +47,5 @@ export default function AddComment({ openComment, setOpenComment, setComment, co
         </div>
       </Dialog>
     </div>
-  )
+  );
 }

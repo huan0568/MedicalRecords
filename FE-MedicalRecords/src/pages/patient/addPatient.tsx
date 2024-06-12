@@ -1,25 +1,25 @@
-import AddForm from '@/components/patient/form/addForm'
-import ImageUploadItem from '@/components/patient/form/imageUpload'
-import { toastError, toastSuccess } from '@/utils/toast'
-import { useRef, useState } from 'react'
-import { BsImages } from 'react-icons/bs'
-import { FaLongArrowAltLeft } from 'react-icons/fa'
+import AddForm from '@/components/patient/form/addForm';
+import ImageUploadItem from '@/components/patient/form/imageUpload';
+import { toastError, toastSuccess } from '@/utils/toast';
+import { useRef, useState } from 'react';
+import { BsImages } from 'react-icons/bs';
+import { FaLongArrowAltLeft } from 'react-icons/fa';
 
 export interface FormData {
-  name: string
-  phone: string
-  email: string
-  age: number
-  address: string
-  images: File[]
+  name: string;
+  phone: string;
+  email: string;
+  age: number;
+  address: string;
+  images: File[];
 }
 
 export default function AddPatientPage() {
-  const [files, setFiles] = useState<File[]>([])
+  const [files, setFiles] = useState<File[]>([]);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const handleAdd = async (data: FormData) => {
     try {
-      // Generate a random 6-digit number
       const id_patient = Math.floor(100000 + Math.random() * 900000);
   
       const patientData = {
@@ -45,51 +45,85 @@ export default function AddPatientPage() {
       }
   
       if (files.length) {
-        const uploadPromises = files.map((file) => {
+        const uploadPromises = files.map(async (file) => {
           const imageFormData = new FormData();
           imageFormData.append('id_patient', String(id_patient));
           imageFormData.append('image_eyes', file);
-
-          return fetch('http://localhost:3001/images/upload', {
+  
+          const normalImageResponse = await fetch('http://localhost:3001/images/upload', {
             method: 'POST',
             body: imageFormData,
           });
-        });
-
-        const imageResponses = await Promise.all(uploadPromises);
-
-        imageResponses.forEach(async (response) => {
-          if (!response.ok) {
-            const errorData: { error: string } = await response.json();
+  
+          if (!normalImageResponse.ok) {
+            const errorData: { error: string } = await normalImageResponse.json();
             throw new Error(errorData.error);
           }
+  
+          console.log('Normal image uploaded:', file.name);
+  
+          const grayImageFormData = new FormData();
+          grayImageFormData.append('image', file);
+  
+          const grayImageResponse = await fetch('http://localhost:5000/process_image', {
+            method: 'POST',
+            body: grayImageFormData,
+          });
+  
+          if (!grayImageResponse.ok) {
+            const errorData: { error: string } = await grayImageResponse.json();
+            throw new Error(errorData.error);
+          }
+  
+          const grayImageBlob = await grayImageResponse.blob();
+          console.log('Received gray image blob:', grayImageBlob);
+  
+          const grayImageFile = new File([grayImageBlob], `gray_${file.name}`, { type: grayImageBlob.type });
+          console.log('Converted gray image to File:', grayImageFile);
+  
+          const grayImageUploadFormData = new FormData();
+          grayImageUploadFormData.append('id_patient', String(id_patient));
+          grayImageUploadFormData.append('image_eyes', grayImageFile);
+  
+          const grayImageUploadResponse = await fetch('http://localhost:3001/images/upload', {
+            method: 'POST',
+            body: grayImageUploadFormData,
+          });
+  
+          if (!grayImageUploadResponse.ok) {
+            const errorData: { error: string } = await grayImageUploadResponse.json();
+            throw new Error(errorData.error);
+          }
+  
+          console.log('Gray image uploaded:', grayImageFile.name);
         });
+  
+        await Promise.all(uploadPromises);
       }
   
       toastSuccess('Thêm bệnh nhân thành công');
     } catch (error) {
+      console.error('Error during patient addition:', error);
       toastError((error as Error).message);
     }
-  };  
-
-  const inputRef = useRef<HTMLInputElement>(null)
+  };
 
   const handleUpload = () => {
     if (inputRef.current) {
-      inputRef.current.click()
+      inputRef.current.click();
     }
-  }
+  };
 
   const handleChangeUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      const newFiles = Array.from(e.target.files)
-      setFiles(newFiles)
+      const newFiles = Array.from(e.target.files);
+      setFiles(newFiles);
     }
-  }
+  };
 
   const handleRemoveImageUpload = (index: number) => () => {
-    setFiles((prevFiles) => prevFiles.filter((file, i) => i !== index))
-  }
+    setFiles((prevFiles) => prevFiles.filter((file, i) => i !== index));
+  };
 
   return (
     <section id='add-patient' className='pt-16'>
@@ -141,9 +175,8 @@ export default function AddPatientPage() {
         </div>
       </div>
     </section>
-  )
+  );
 }
-
 
 
 

@@ -1,5 +1,5 @@
 import InputField from '@/components/forms/inputField'
-import { FormData } from '@/pages/patient/addPatient'
+import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { BsHouseDoor } from 'react-icons/bs'
 import { CiCalendar } from 'react-icons/ci'
@@ -8,19 +8,38 @@ import { MdOutlineEmail, MdPerson } from 'react-icons/md'
 
 interface IProps {
   data?: IPatient
+  isUpdate?: boolean
   handle: (data: FormData) => void
   files: (File | IImages)[]
   setFiles: (files: File[]) => void
 }
 
-export default function AddForm({ data, files, setFiles, handle }: IProps) {
+export interface FormData {
+  name: string
+  phone: string
+  email: string
+  age: number
+  address: string
+}
+
+export default function AddForm({ data, files, setFiles, handle, isUpdate }: IProps) {
   const {
     register,
-    reset: resetFields,
     handleSubmit,
+    setValue,
+    reset: resetFields,
     formState: { errors }
-  } = useForm<FormData>()
+  } = useForm<FormData>({ mode: 'onBlur' })
 
+  useEffect(() => {
+    if (data) {
+      setValue('name', data.name)
+      setValue('age', data.age)
+      setValue('phone', data.phone)
+      setValue('email', data.email)
+      setValue('address', data.address)
+    }
+  }, [data])
   const handleCancel = () => {
     resetFields()
     setFiles([])
@@ -34,7 +53,6 @@ export default function AddForm({ data, files, setFiles, handle }: IProps) {
             autoFocus
             label='Họ và tên'
             name='name'
-            defaultValue={data?.name}
             placeholder='Ví dụ: Nguyễn Văn A'
             register={register}
             Icon={MdPerson}
@@ -58,7 +76,6 @@ export default function AddForm({ data, files, setFiles, handle }: IProps) {
             name='age'
             type='number'
             label='Tuổi'
-            defaultValue={String(data?.age)}
             placeholder='Ví dụ: 24'
             register={register}
             Icon={CiCalendar}
@@ -80,7 +97,6 @@ export default function AddForm({ data, files, setFiles, handle }: IProps) {
             name='phone'
             type='number'
             label='Số điện thoại'
-            defaultValue={data?.phone}
             placeholder='Ví dụ: 0123456789'
             register={register}
             Icon={FiPhone}
@@ -100,7 +116,6 @@ export default function AddForm({ data, files, setFiles, handle }: IProps) {
             name='email'
             label='Email'
             placeholder='Ví dụ: nguyenvana@gmail.com'
-            defaultValue={data?.email}
             register={register}
             Icon={MdOutlineEmail}
             option={{
@@ -120,7 +135,6 @@ export default function AddForm({ data, files, setFiles, handle }: IProps) {
           name='address'
           label='Địa chỉ'
           placeholder='Ví dụ: 123 Đường ABC, Quận XYZ, Thành phố HCM'
-          defaultValue={data?.address}
           register={register}
           Icon={BsHouseDoor}
           option={{
@@ -139,11 +153,10 @@ export default function AddForm({ data, files, setFiles, handle }: IProps) {
           Hủy
         </button>
         <button
-          disabled={!files.length}
           type='submit'
-          className={`${!files.length && 'bg-opacity-50 cursor-not-allowed'} rounded-2xl w-full py-2 text-lg font-bold tracking-wider text-white hover:scale-105 bg-sky-600 md:py-3`}
+          className={`rounded-2xl w-full py-2 text-lg font-bold tracking-wider text-white hover:scale-105 bg-sky-600 md:py-3`}
         >
-          Thêm
+          {isUpdate ? 'Chỉnh sửa' : 'Thêm'}
         </button>
       </div>
     </form>

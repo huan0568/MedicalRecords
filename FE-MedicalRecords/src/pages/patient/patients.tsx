@@ -1,39 +1,29 @@
 import { DeleteWarning, Diagnose } from '@/components/dialogs'
 import SelectField from '@/components/forms/selectField'
 import { useDebounce } from '@/components/hooks/useDebounce'
-import useFilteredPatients from '@/components/hooks/useFilteredPatients'
 import Pagination from '@/components/pagination'
 import ListPatients from '@/components/patient/listPatients'
-import { patients } from '@/utils/fakeData'
 import { resultOptions } from '@/utils/filters'
 import { toastError, toastSuccess } from '@/utils/toast'
 import useHandleSetUrl from '@/utils/useHandleUrl'
-import axios from 'axios'
 import { useCallback, useEffect, useState } from 'react'
 import { CiSearch } from 'react-icons/ci'
 import { IoRefresh } from 'react-icons/io5'
 import { useSearchParams } from 'react-router-dom'
+import axios from 'axios'
 
 export default function PatientPage() {
   const handleSetUrl = useHandleSetUrl()
   const [searchParams] = useSearchParams()
-
-  async function fetchTest(){
-    const res = await axios.get(`${import.meta.env.VITE_PUBLIC_API}/patients`)
-    console.log(res.data)
-  }
-
-
-  useEffect(() => {
-    fetchTest()
-  },[])
 
   const keyword = searchParams.get('keyword') || ''
   const currentPage = searchParams.get('page') || 1
 
   const [search, setSearch] = useState<string>(keyword)
   const [selected, setSelected] = useState<IResultOptions>(resultOptions[0])
-  const resultPatients = useFilteredPatients(selected, patients)
+  const [patients, setPatients] = useState<IPatient[]>([])
+  const [filterPatients, setFilterPatient] = useState<IPatient[]>([])
+  const [totalPages, setTotalPages] = useState<number>(1)
 
   const [openDeleteAlert, setOpenDeleteAlert] = useState<IOpenEditUser>({
     id: '',
@@ -42,29 +32,92 @@ export default function PatientPage() {
   })
 
   const [openDiagnose, setOpenDiagnose] = useState<boolean>(false)
-  
-
 
   const handleDelete = useCallback(async (id: string) => {
     try {
       const res = id || false
       if (res) {
         toastSuccess(`Xoá thành công bệnh nhân`)
+        // Remove the deleted patient from the list
+        setPatients((prev) => prev.filter((patient) => patient.id !== id))
       }
     } catch (error) {
       toastError((error as IError).error)
     }
   }, [])
 
+  // Fetch all patients initially
+  useEffect(() => {
+    const fetchAllPatients = async () => {
+      try {
+        const response = await axios.get('http://localhost:3001/patients')
+        if (Array.isArray(response.data)) {
+          setPatients(response.data)
+        } else {
+          setPatients([])
+          toastError('Unexpected data format from API')
+        }
+      } catch (error) {
+        toastError('Error fetching patients')
+        setPatients([]) // Ensure patients is an array even if there's an error
+      }
+    }
+    fetchAllPatients()
+  }, [])
+
   useDebounce(
     { search },
     300,
     async () => {
-      if (!search) return
+      if (!search) {
+        try {
+          const response = await axios.get('http://localhost:3001/patients')
+          if (Array.isArray(response.data)) {
+            setPatients(response.data)
+          } else {
+            setPatients([])
+            toastError('Unexpected data format from API')
+          }
+          setTotalPages(1) // Adjust based on your pagination
+        } catch (error) {
+          toastError('Error fetching patients')
+          setPatients([]) // Ensure patients is an array even if there's an error
+        }
+        return
+      }
+
       handleSetUrl('keyword', search)
+
+      try {
+        const response = await axios.get(`http://localhost:3001/patients/search/${search}`)
+        if (response.data && Array.isArray(response.data.patients)) {
+          setPatients(response.data.patients)
+          console.log('Fetched patients:', response.data.patients) // Log the fetched patients
+        } else {
+          setPatients([])
+          toastError('Unexpected data format from API')
+        }
+        setTotalPages(1) // Adjust based on your pagination
+      } catch (error) {
+        toastError('Error searching patients')
+        setPatients([]) // Ensure patients is an array even if there's an error
+      }
     },
     [search]
   )
+
+  useEffect(() => {
+    let filterPatients = [...patients]
+
+    if (selected.value === 1) {
+      filterPatients = filterPatients.filter((i) => i.is_result)
+    }
+
+    if (selected.value === 2) {
+      filterPatients = filterPatients.filter((i) => !i.is_result)
+    }
+    setFilterPatient(filterPatients)
+  }, [selected, patients])
 
   return (
     <section id='scroll' className='pt-16 pb-3'>
@@ -108,7 +161,7 @@ export default function PatientPage() {
           </div>
         </div>
 
-        <ListPatients patients={resultPatients} setOpenDeleteAlert={setOpenDeleteAlert} />
+        <ListPatients patients={filterPatients} setOpenDeleteAlert={setOpenDeleteAlert} />
 
         <Diagnose openAlert={openDiagnose} setOpenAlert={() => setOpenDiagnose(!openDiagnose)} />
 
@@ -119,7 +172,7 @@ export default function PatientPage() {
           handleDelete={() => handleDelete(openDeleteAlert.id)}
         />
 
-        <Pagination page={+currentPage} totalPage={resultPatients.totalPages} />
+        <Pagination page={+currentPage} totalPage={totalPages} />
       </div>
     </section>
   )

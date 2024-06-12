@@ -37,3 +37,18 @@ exports.getImagesByPatientId = async (req, res) => {
         res.status(400).json({ error: error.message });
     }
 };
+
+exports.deleteImageByPatientId = async (req, res) => {
+    try {
+        const { id_patient } = req.params;
+        const result = await Image.deleteMany({ id_patient });
+        if (result.deletedCount === 0) {
+            return res.status(404).json({ error: 'No images found for this patient' });
+        }
+        res.status(200).json({ message: 'Images deleted successfully' });
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+};
+
+

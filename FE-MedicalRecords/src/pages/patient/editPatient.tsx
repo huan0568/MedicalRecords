@@ -37,7 +37,9 @@ export default function EditPatientPage() {
     const fetchPatientImages = async () => {
       try {
         const imagesResponse = await axios.get(`http://localhost:3001/images/patient/${id}`)
-        const images = imagesResponse.data.map((img: any) => `data:${img.contentType};base64,${arrayBufferToBase64(img.data.data)}`)
+        const images = imagesResponse.data.map(
+          (img: any) => `data:${img.contentType};base64,${arrayBufferToBase64(img.data.data)}`
+        )
         setPatientImages(images)
       } catch (error) {
         console.error('Error fetching patient images:', error)
@@ -48,12 +50,9 @@ export default function EditPatientPage() {
     fetchPatientImages()
   }, [id])
 
-  const handleUpdate = useCallback(
-    async (data: FormData) => {
-      // Handle patient data update
-    },
-    []
-  )
+  const handleUpdate = useCallback(async (data: FormData) => {
+    // Handle patient data update
+  }, [])
 
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -108,7 +107,7 @@ export default function EditPatientPage() {
           <h1 className='px-4 pb-4 mb-2 text-xl font-bold border-b-4 lg:text-2xl border-slate-400'>
             Thông tin cá nhân
           </h1>
-          <AddForm setFiles={setFiles} files={files} handle={handleUpdate} data={patientData} />
+          <AddForm isUpdate setFiles={setFiles} files={files} handle={handleUpdate} data={patientData} />
         </div>
         <div className='flex-[3] py-2 bg-white shadow-pop rounded-xl'>
           <input
@@ -145,13 +144,3 @@ export default function EditPatientPage() {
     </section>
   )
 }
-
-
-
-
-
-
-
-
-
-
