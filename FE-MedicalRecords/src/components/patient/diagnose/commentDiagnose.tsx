@@ -38,7 +38,7 @@ const CommentDiagnose: React.FC<IProps> = ({ data, savedValues, currentImageId }
     };
 
     try {
-      const response = await axios.post('http://localhost:3001/feedback/create', feedbackData);
+      const response = await axios.post('http://localhost:3001/feedbacks/create', feedbackData);
       if (response.status >= 200 && response.status < 300) {
         toast.success('Feedback saved successfully');
       } else {

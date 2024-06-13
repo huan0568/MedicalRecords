@@ -50,9 +50,14 @@ export default function EditPatientPage() {
     fetchPatientImages()
   }, [id])
 
-  const handleUpdate = useCallback(async (data: FormData) => {
-    // Handle patient data update
-  }, [])
+  const handleUpdate = useCallback(
+    async (data: FormData) => {
+      await axios.put(`http://localhost:3001/patients/update/${patientData?._id}`, {
+        data
+      })
+    },
+    [patientData?._id]
+  )
 
   const inputRef = useRef<HTMLInputElement>(null)
 

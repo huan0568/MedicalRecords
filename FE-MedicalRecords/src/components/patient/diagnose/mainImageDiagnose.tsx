@@ -1,157 +1,190 @@
-import defaultAvatar from '@/assets/default-avatar.png'
-import { useState, useEffect, useRef } from 'react'
-import { AiOutlineMinus } from 'react-icons/ai'
-import { GrPowerReset } from 'react-icons/gr'
-import { IoAddOutline } from 'react-icons/io5'
-import { TransformComponent, TransformWrapper } from 'react-zoom-pan-pinch'
-import axios from 'axios'
-import { toast, ToastContainer } from 'react-toastify'
-import 'react-toastify/dist/ReactToastify.css'
-import { usePrediction } from '../../../pages/patient/PredictionContext'
+import defaultAvatar from '@/assets/default-avatar.png';
+import { useState, useEffect, useRef } from 'react';
+import { AiOutlineMinus } from 'react-icons/ai';
+import { GrPowerReset } from 'react-icons/gr';
+import { IoAddOutline } from 'react-icons/io5';
+import { TransformComponent, TransformWrapper } from 'react-zoom-pan-pinch';
+import axios from 'axios';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { usePrediction } from '../../../pages/patient/PredictionContext';
 
 interface IProps {
-  images?: string[]
-  imageIds?: string[]
-  id: string // Define the id property
-  setCurrentImageId: (id: string | null) => void
+  grayImages?: string[];
+  normalImages?: string[];
+  imageIds?: string[];
+  id: string;
+  setCurrentImageId: (id: string | null) => void;
 }
 
-export default function MainImageDiagnose({ images, imageIds, id, setCurrentImageId }: IProps) {
-  const [currentImageIndex, setCurrentImageIndex] = useState<number>(0)
-  const [uploadedImages, setUploadedImages] = useState<File[]>([])
-  const { setPrediction, fetchPredictionResults, setPredictionResults } = usePrediction()
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const [currentType, setCurrentType] = useState<string>('UFI')
-  const handleSwitImgType = (type: string) => setCurrentType(type)
+export default function MainImageDiagnose({
+  grayImages,
+  normalImages,
+  imageIds,
+  id,
+  setCurrentImageId
+}: IProps) {
+  const [currentImageIndex, setCurrentImageIndex] = useState<number>(0);
+  const [uploadedNormalImages, setUploadedNormalImages] = useState<File[]>([]);
+  const [uploadedGrayImages, setUploadedGrayImages] = useState<File[]>([]);
+  const [normalImageIds, setNormalImageIds] = useState<string[]>(imageIds || []);
+  const [grayImageIds, setGrayImageIds] = useState<string[]>(imageIds || []);
+  const { setPrediction, fetchPredictionResults, setPredictionResults } = usePrediction();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [currentType, setCurrentType] = useState<string>('UFI');
 
   useEffect(() => {
-    if (imageIds && imageIds[currentImageIndex]) {
-      setCurrentImageId(imageIds[currentImageIndex]) // Reference to setCurrentImageId
+    if (grayImages && normalImages && imageIds) {
+      const normalIds = normalImages.map((_, index) => imageIds[index]);
+      const grayIds = grayImages.map((_, index) => imageIds[normalImages.length + index]);
+      setNormalImageIds(normalIds);
+      setGrayImageIds(grayIds);
+      setCurrentImageId(normalIds[0] || grayIds[0] || null);
     }
-  }, [currentImageIndex, imageIds, setCurrentImageId])
+  }, [grayImages, normalImages, imageIds, setCurrentImageId]);
+
+  useEffect(() => {
+    if (currentType === 'UFI' && normalImageIds[currentImageIndex]) {
+      setCurrentImageId(normalImageIds[currentImageIndex]);
+    } else if (currentType === 'CFI' && grayImageIds[currentImageIndex]) {
+      setCurrentImageId(grayImageIds[currentImageIndex]);
+    }
+  }, [currentImageIndex, normalImageIds, grayImageIds, setCurrentImageId, currentType]);
+
+  const handleSwitImgType = (type: string) => {
+    setCurrentType(type);
+    setCurrentImageIndex(0); // Reset current image index when switching image type
+  };
 
   const handleUpload = async () => {
     try {
-      console.log('Attempting to upload...')
       if (fileInputRef.current && fileInputRef.current.files) {
-        console.log('Starting upload process...')
-        const formData = new FormData()
+        const formData = new FormData();
         Array.from(fileInputRef.current.files).forEach((file) => {
-          formData.append('id_patient', id) // Append id_patient
-          formData.append('image_eyes', file)
-        })
-        console.log('FormData:', formData)
+          formData.append('id_patient', id); // Append id_patient
+          formData.append('image_eyes', file);
+        });
 
-        const response = await axios.post('http://localhost:3001/images/upload', formData)
-        console.log('Upload response:', response)
+        // Conditionally append isGrayImage parameter if currentType is 'CFI'
+        if (currentType === 'CFI') {
+          formData.append('isGrayImage', 'true');
+        }
+
+        const response = await axios.post('http://localhost:3001/images/upload', formData);
 
         if (response.status >= 200 && response.status < 300) {
-          toast.success('Image(s) uploaded successfully')
+          toast.success('Image(s) uploaded successfully');
         } else {
-          toast.error('Failed to upload image(s)')
+          toast.error('Failed to upload image(s)');
         }
       } else {
-        toast.error('Please select image(s) to upload')
+        toast.error('Please select image(s) to upload');
       }
     } catch (error) {
-      console.error('Error uploading image(s):', error)
-      toast.error('Error uploading image(s)')
+      console.error('Error uploading image(s):', error);
+      toast.error('Error uploading image(s)');
     }
-  }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        if (imageIds && imageIds[currentImageIndex]) {
-          await fetchPredictionResults(imageIds[currentImageIndex])
+        if (currentType === 'UFI' && normalImageIds[currentImageIndex]) {
+          await fetchPredictionResults(normalImageIds[currentImageIndex]);
+        } else if (currentType === 'CFI' && grayImageIds[currentImageIndex]) {
+          await fetchPredictionResults(grayImageIds[currentImageIndex]);
         }
       } catch (error) {
-        console.error('Error fetching prediction results:', error)
+        console.error('Error fetching prediction results:', error);
       }
-    }
+    };
 
-    fetchData()
-  }, [currentImageIndex, imageIds, fetchPredictionResults])
+    fetchData();
+  }, [currentImageIndex, normalImageIds, grayImageIds, fetchPredictionResults, currentType]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      const filesArray = Array.from(e.target.files)
-      setUploadedImages(filesArray)
-      setCurrentImageIndex(images?.length || 0)
-      // Immediately trigger the upload process
-      handleUpload()
+      const filesArray = Array.from(e.target.files);
+      if (currentType === 'UFI') {
+        setUploadedNormalImages((prevImages) => [...prevImages, ...filesArray]);
+        const newImageLength = normalImages?.length || 0;
+        setCurrentImageIndex(newImageLength + filesArray.length - 1);
+      } else {
+        setUploadedGrayImages((prevImages) => [...prevImages, ...filesArray]);
+        const newImageLength = grayImages?.length || 0;
+        setCurrentImageIndex(newImageLength + filesArray.length - 1);
+      }
+      handleUpload();
     }
-  }
+  };
 
   const handlePredict = async () => {
     try {
-      let formData = new FormData()
+      let formData = new FormData();
+      const imageArray = currentType === 'UFI' ? normalImages : grayImages;
+      const uploadedImages = currentType === 'UFI' ? uploadedNormalImages : uploadedGrayImages;
 
       if (uploadedImages.length > 0) {
-        formData.append('image', uploadedImages[currentImageIndex - (images?.length || 0)])
-      } else if (images?.length) {
-        const imageId = imageIds?.[currentImageIndex]
-        console.log('Image ID:', imageId)
-        const response = await axios.get(images[currentImageIndex], { responseType: 'arraybuffer' })
-        const blob = new Blob([response.data], { type: response.headers['content-type'] })
-        formData.append('image', blob, imageId)
+        formData.append('image', uploadedImages[currentImageIndex - (imageArray?.length || 0)]);
+      } else if (imageArray?.length) {
+        const imageId = currentType === 'UFI' ? normalImageIds[currentImageIndex] : grayImageIds[currentImageIndex];
+        const response = await axios.get(imageArray[currentImageIndex], { responseType: 'arraybuffer' });
+        const blob = new Blob([response.data], { type: response.headers['content-type'] });
+        formData.append('image', blob, imageId);
       } else {
-        toast.error('Please select an image to predict')
-        return
+        toast.error('Please select an image to predict');
+        return;
       }
 
       const response = await axios.post('http://localhost:5000/predict_retinopathy', formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
-      })
+      });
 
-      console.log('Prediction response:', response.data)
-
-      const predictionValues = response.data.prediction[0]
-      const categories = ['Mild', 'Moderate', 'No_DR', 'Proliferate_DR', 'Severe']
-      const maxIndex = predictionValues.indexOf(Math.max(...predictionValues))
-      const diabeticRetinopathy = categories[maxIndex]
+      const predictionValues = response.data.prediction[0];
+      const categories = ['Mild', 'Moderate', 'No_DR', 'Proliferate_DR', 'Severe'];
+      const maxIndex = predictionValues.indexOf(Math.max(...predictionValues));
+      const diabeticRetinopathy = categories[maxIndex];
 
       const postResponse = await axios.post('http://localhost:3001/predictions/create', {
-        id_image: imageIds?.[currentImageIndex],
+        id_image: currentType === 'UFI' ? normalImageIds[currentImageIndex] : grayImageIds[currentImageIndex],
         mild_value: predictionValues[0],
         moderate_value: predictionValues[1],
         noDR_value: predictionValues[2],
         proliferateDR_value: predictionValues[3],
         severe_value: predictionValues[4],
         diabetic_Retinopathy: diabeticRetinopathy
-      })
+      });
 
-      console.log('Post prediction response:', postResponse.data)
+      setPrediction(JSON.stringify(response.data.prediction));
+      setPredictionResults([]);
 
-      setPrediction(JSON.stringify(response.data.prediction))
-      setPredictionResults([])
-
-      if (imageIds && imageIds[currentImageIndex]) {
-        await fetchPredictionResults(imageIds[currentImageIndex])
+      if (currentType === 'UFI' && normalImageIds[currentImageIndex]) {
+        await fetchPredictionResults(normalImageIds[currentImageIndex]);
+      } else if (currentType === 'CFI' && grayImageIds[currentImageIndex]) {
+        await fetchPredictionResults(grayImageIds[currentImageIndex]);
       }
 
-      toast.success('Prediction successful')
+      toast.success('Prediction successful');
     } catch (error) {
-      console.error('Error predicting image:', error)
-      toast.error('Error predicting image')
+      console.error('Error predicting image:', error);
+      toast.error('Error predicting image');
     }
-  }
+  };
 
   return (
     <section id='main-image' className='h-full gap-2 md:flex'>
       <ToastContainer />
       <div className='flex w-full gap-2 mb-4 overflow-auto md:block md:w-40 md:mb-0'>
-        {images?.length ? (
-          images.map((image, index) => (
+        {currentType === 'CFI' &&
+          grayImages?.map((image, index) => (
             <div key={index} className='flex-shrink-0 image-container w-28 aspect-square'>
               <img
                 onClick={() => setCurrentImageIndex(index)}
                 src={image || defaultAvatar}
                 alt=''
-                className={`mb-2 image rounded-xl ${currentImageIndex === index && 'border-4 border-sky-600'}
-                ${currentType === 'CFI' && 'grayscale'}`}
+                className={`mb-2 image rounded-xl ${currentImageIndex === index && 'border-4 border-sky-600'}`}
               />
               <p
                 className={`
@@ -161,26 +194,60 @@ export default function MainImageDiagnose({ images, imageIds, id, setCurrentImag
                 {`Image ${index + 1}`}
               </p>
             </div>
-          ))
-        ) : (
-          <div className='flex-shrink-0 image-container w-28 aspect-square'>
-            <img src={defaultAvatar} alt='' className='mb-2 image rounded-xl' />
-            <p
-              className={`
-              text-center text-white bottom-0 w-full rounded-b-xl bg-black bg-opacity-50 line-clamp-1 absolute-center-x`}
-            >
-              Không có ảnh
-            </p>
-          </div>
-        )}
-        {uploadedImages.map((file, index) => (
+          ))}
+
+        {currentType === 'UFI' &&
+          normalImages?.map((image, index) => (
+            <div key={index} className='flex-shrink-0 image-container w-28 aspect-square'>
+              <img
+                onClick={() => setCurrentImageIndex(index)}
+                src={image || defaultAvatar}
+                alt=''
+                className={`mb-2 image rounded-xl ${currentImageIndex === index && 'border-4 border-sky-600'}`}
+              />
+              <p
+                className={`
+                ${currentImageIndex === index ? 'bottom-1 w-[calc(100%-7.5px)] rounded-b-lg' : 'bottom-0 w-full rounded-b-xl'}
+                text-center text-white bg-black bg-opacity-50 line-clamp-1 absolute-center-x`}
+              >
+                {`Image ${index + 1}`}
+              </p>
+            </div>
+          ))}
+
+        {currentType === 'UFI' && uploadedNormalImages.map((file, index) => (
           <div key={index} className='flex-shrink-0 image-container w-28 aspect-square'>
             <img
-              onClick={() => setCurrentImageIndex((images?.length || 0) + index)}
+              onClick={() => setCurrentImageIndex((normalImages?.length ?? 0) + index)}
               src={URL.createObjectURL(file)}
               alt=''
-              className={`mb-2 image rounded-xl ${currentImageIndex === (images?.length || 0) + index && 'border-4 border-sky-600'}`}
+              className={`mb-2 image rounded-xl ${currentImageIndex === ((normalImages?.length ?? 0) + index) && 'border-4 border-sky-600'}`}
             />
+            <p
+              className={`
+                ${currentImageIndex === ((normalImages?.length ?? 0) + index) ? 'bottom-1 w-[calc(100%-7.5px)] rounded-b-lg' : 'bottom-0 w-full rounded-b-xl'}
+                text-center text-white bg-black bg-opacity-50 line-clamp-1 absolute-center-x`}
+            >
+              {`Image ${(normalImages?.length || 0) + index + 1}`}
+            </p>
+          </div>
+        ))}
+
+        {currentType === 'CFI' && uploadedGrayImages.map((file, index) => (
+          <div key={index} className='flex-shrink-0 image-container w-28 aspect-square'>
+            <img
+              onClick={() => setCurrentImageIndex((grayImages?.length ?? 0) + index)}
+              src={URL.createObjectURL(file)}
+              alt=''
+              className={`mb-2 image rounded-xl ${currentImageIndex === ((grayImages?.length ?? 0) + index) && 'border-4 border-sky-600'}`}
+            />
+            <p
+              className={`
+                ${currentImageIndex === ((grayImages?.length ?? 0) + index) ? 'bottom-1 w-[calc(100%-7.5px)] rounded-b-lg' : 'bottom-0 w-full rounded-b-xl'}
+                text-center text-white bg-black bg-opacity-50 line-clamp-1 absolute-center-x`}
+            >
+              {`Image ${(grayImages?.length || 0) + index + 1}`}
+            </p>
           </div>
         ))}
 
@@ -228,15 +295,16 @@ export default function MainImageDiagnose({ images, imageIds, id, setCurrentImag
                   <div className='bg-white w-[19.5rem] md:w-[27.5rem] h-[19.5rem] md:h-[27.5rem] image-container'>
                     <img
                       src={
-                        uploadedImages.length > 0 && currentImageIndex >= (images?.length || 0)
-                          ? URL.createObjectURL(uploadedImages[currentImageIndex - (images?.length || 0)])
-                          : images?.[currentImageIndex] || defaultAvatar
+                        currentType === 'UFI'
+                          ? (uploadedNormalImages.length > 0 && currentImageIndex >= (normalImages?.length || 0))
+                            ? URL.createObjectURL(uploadedNormalImages[currentImageIndex - (normalImages?.length || 0)])
+                            : normalImages?.[currentImageIndex] || defaultAvatar
+                          : (uploadedGrayImages.length > 0 && currentImageIndex >= (grayImages?.length || 0))
+                            ? URL.createObjectURL(uploadedGrayImages[currentImageIndex - (grayImages?.length || 0)])
+                            : grayImages?.[currentImageIndex] || defaultAvatar
                       }
                       alt=''
-                      className={`object-cover w-full h-full mx-auto 
-                ${currentType === 'CFI' && 'grayscale'}
-                        
-                        `}
+                      className='object-cover w-full h-full mx-auto'
                     />
                   </div>
                 </TransformComponent>
@@ -269,5 +337,7 @@ export default function MainImageDiagnose({ images, imageIds, id, setCurrentImag
         </div>
       </div>
     </section>
-  )
+  );
 }
+
+

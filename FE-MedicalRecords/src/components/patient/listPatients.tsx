@@ -12,6 +12,7 @@ interface IProps {
 }
 
 const ListPatients: React.FC<IProps> = ({ patients, setOpenDeleteAlert }) => {
+  console.log(patients)
   return (
     <div className='w-[calc(100vw-1rem)] overflow-x-auto lg:w-full'>
       <div className='min-w-full border-2 border-r-0 border-black border-y-0 lg:border-2 rounded-xl'>
@@ -57,7 +58,7 @@ const ListPatients: React.FC<IProps> = ({ patients, setOpenDeleteAlert }) => {
                       onClick={() =>
                         setOpenDeleteAlert({
                           open: true,
-                          id: item.id ?? item.id_patient,
+                          id: item._id ?? item.id_patient,
                           name: item.name
                         })
                       }

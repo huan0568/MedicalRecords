@@ -35,11 +35,9 @@ export default function PatientPage() {
 
   const handleDelete = useCallback(async (id: string) => {
     try {
-      const res = id || false
-      if (res) {
-        toastSuccess(`Xoá thành công bệnh nhân`)
-        // Remove the deleted patient from the list
-        setPatients((prev) => prev.filter((patient) => patient.id !== id))
+      const response = await axios.delete(`http://localhost:3001/patients/delete/${id}`)
+      if (response.status === 200) {
+        setPatients((prev) => prev.filter((patient) => patient._id !== id))
       }
     } catch (error) {
       toastError((error as IError).error)

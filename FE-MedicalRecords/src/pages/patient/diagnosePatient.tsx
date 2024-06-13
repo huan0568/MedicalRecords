@@ -8,10 +8,11 @@ import axios from 'axios'
 export default function DiagnosePatientPage() {
   const { id } = useParams<{ id: string }>()
   const [patientData, setPatientData] = useState<IPatient | null>(null)
-  const [patientImages, setPatientImages] = useState<string[]>([])
+  const [grayImages, setGrayImages] = useState<string[]>([])
+  const [normalImages, setNormalImages] = useState<string[]>([])
   const [imageIds, setImageIds] = useState<string[]>([]) // State to store image IDs
-  const [savedValues, setSavedValues] = useState<{ [key: string]: string }>({});
-  const [currentImageId, setCurrentImageId] = useState<string | null>(null);
+  const [savedValues, setSavedValues] = useState<{ [key: string]: string }>({})
+  const [currentImageId, setCurrentImageId] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchPatientData = async () => {
@@ -19,24 +20,36 @@ export default function DiagnosePatientPage() {
         const patientResponse = await axios.get(`http://localhost:3001/patients/find/${id}`)
         setPatientData(patientResponse.data)
 
-        const imagesResponse = await axios.get(`http://localhost:3001/images/patient/${id}`)
-        const images = imagesResponse.data.map((img: any) => {
-          setImageIds((prevIds) => [...prevIds, img._id]); // Store image ID
+        const grayImagesResponse = await axios.get(`http://localhost:3001/images/patient/gray/${id}`)
+        const normalImagesResponse = await axios.get(`http://localhost:3001/images/patient/normal/${id}`)
+        const grayImages = grayImagesResponse.data.map((img: any) => {
+          setImageIds((prevIds) => [...prevIds, img._id])
           return `data:${img.contentType};base64,${arrayBufferToBase64(img.data.data)}`
-        });
-        setPatientImages(images)
-        setCurrentImageId(imagesResponse.data[0]?._id); // Set initial image ID
+        })
+
+        const normalImages = normalImagesResponse.data.map((img: any) => {
+          setImageIds((prevIds) => [...prevIds, img._id])
+          return `data:${img.contentType};base64,${arrayBufferToBase64(img.data.data)}`
+        })
+
+        console.log('dd', normalImages)
+
+        setGrayImages(grayImages)
+        setNormalImages(normalImages)
+        setCurrentImageId(grayImagesResponse.data[0]?._id || normalImagesResponse.data[0]?._id || null)
       } catch (error) {
         console.error('Error fetching patient data:', error)
         setPatientData(null)
-        setPatientImages([])
+        setGrayImages([])
+        setNormalImages([])
       }
     }
 
     fetchPatientData()
   }, [id])
 
-  // Function to convert ArrayBuffer to base64 string
+  console.log('aaa', savedValues)
+
   const arrayBufferToBase64 = (buffer: ArrayBuffer) => {
     let binary = ''
     const bytes = new Uint8Array(buffer)
@@ -59,19 +72,22 @@ export default function DiagnosePatientPage() {
       </div>
       <div className='gap-4 lg:flex'>
         <div className='h-full py-3 mb-4 bg-white lg:w-1/6 rounded-xl shadow-pop lg:mb-0'>
-          {/* Render DetailPatient component with patientData */}
           {patientData ? <DetailPatient data={patientData} /> : null}
         </div>
         <div className='flex-1 p-4 mb-4 h-[33rem] bg-white rounded-xl shadow-pop lg:mb-0'>
-          {/* Pass images and imageIds to MainImageDiagnose */}
-          <MainImageDiagnose images={patientImages} imageIds={imageIds} id={id} setCurrentImageId={setCurrentImageId}/>
+          <MainImageDiagnose
+            grayImages={grayImages}
+            normalImages={normalImages}
+            imageIds={imageIds}
+            id={id}
+            setCurrentImageId={setCurrentImageId}
+          />
         </div>
         <div className='lg:w-1/5'>
-          {/* Render ImageResults and CommentDiagnose components with patientData */}
           {patientData ? (
             <>
-              <ImageResults data={patientData} savedValues={savedValues} setSavedValues={setSavedValues} />
-              <CommentDiagnose data={patientData} savedValues={savedValues} currentImageId={currentImageId}/>
+              <ImageResults isEdit data={patientData} savedValues={savedValues} setSavedValues={setSavedValues} />
+              <CommentDiagnose data={patientData} savedValues={savedValues} currentImageId={currentImageId} />
             </>
           ) : null}
         </div>
@@ -79,9 +95,3 @@ export default function DiagnosePatientPage() {
     </section>
   )
 }
-
-
-
-
-
-

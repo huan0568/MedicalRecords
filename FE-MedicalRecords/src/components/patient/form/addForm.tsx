@@ -40,6 +40,9 @@ export default function AddForm({ data, files, setFiles, handle, isUpdate }: IPr
       setValue('address', data.address)
     }
   }, [data])
+
+  console.log(data)
+
   const handleCancel = () => {
     resetFields()
     setFiles([])

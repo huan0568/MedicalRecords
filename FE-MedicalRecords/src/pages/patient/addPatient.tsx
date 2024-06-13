@@ -12,6 +12,7 @@ export interface FormData {
   age: number;
   address: string;
   images: File[];
+  isGrayImage: string;
 }
 
 export default function AddPatientPage() {
@@ -84,6 +85,7 @@ export default function AddPatientPage() {
           const grayImageUploadFormData = new FormData();
           grayImageUploadFormData.append('id_patient', String(id_patient));
           grayImageUploadFormData.append('image_eyes', grayImageFile);
+          grayImageUploadFormData.append('isGrayImage', 'true'); 
   
           const grayImageUploadResponse = await fetch('http://localhost:3001/images/upload', {
             method: 'POST',

@@ -12,19 +12,18 @@ const titleToKeyMapping: { [key: string]: string } = {
 }
 
 interface ImageResultsProps {
+  isEdit?: boolean
   savedValues: { [key: string]: string }
   setSavedValues: React.Dispatch<React.SetStateAction<{ [key: string]: string }>>
 }
 
-const ImageResults: React.FC<ImageResultsProps> = ({ savedValues, setSavedValues }) => {
+const ImageResults: React.FC<ImageResultsProps> = ({ savedValues, isEdit, setSavedValues }) => {
   const { predictionResults } = usePrediction()
   const [formattedPrediction, setFormattedPrediction] = useState<JSX.Element[]>([])
   const [checkedIndex, setCheckedIndex] = useState<number>(0)
-  const [isEditing, setIsEditing] = useState<boolean>(false)
+  const [isEditing, setIsEditing] = useState<boolean>(isEdit)
   const [editValues, setEditValues] = useState<{ [key: string]: string }>({})
 
-  const isConfirm = (checkedIndex: number, index: number) => !!checkedIndex && checkedIndex !== index
-  console.log(checkedIndex)
   useEffect(() => {
     if (predictionResults && predictionResults.length > 0) {
       const initialEditValues: { [key: string]: string } = {}
@@ -47,7 +46,7 @@ const ImageResults: React.FC<ImageResultsProps> = ({ savedValues, setSavedValues
   const handleSave = () => {
     const newSavedValues = {
       ...editValues,
-      'Diabetic Retinopathy': defaultTitles[checkedIndex ?? 0] // Ensure the defaultTitles array is used to set the Diabetic Retinopathy based on the checked index
+      'Diabetic Retinopathy': defaultTitles[checkedIndex ? checkedIndex - 1 : 0] // Fixed here
     }
     setSavedValues(newSavedValues)
     setIsEditing(false)
@@ -61,11 +60,13 @@ const ImageResults: React.FC<ImageResultsProps> = ({ savedValues, setSavedValues
           return parseFloat(predictionResults[0][key] || 0)
         })
 
-        const maxIndex = values.indexOf(Math.max(...values))
+        const selectedDiabeticRetinopathyIndex = checkedIndex ? checkedIndex - 1 : values.indexOf(Math.max(...values))
 
         const formattedData = defaultTitles.map((title, index) => {
           const key = titleToKeyMapping[title.toLowerCase()]
           const value = savedValues[title] || editValues[title] || ''
+          const diabeticRetinopathyValue = defaultTitles[selectedDiabeticRetinopathyIndex]
+
           return (
             <div key={title} className='px-4 border-b flex-center-y border-slate-400'>
               <div className='w-32 flex-shrink-0'>
@@ -83,14 +84,14 @@ const ImageResults: React.FC<ImageResultsProps> = ({ savedValues, setSavedValues
               )}
               <div className='flex items-center ml-auto'>
                 <div
-                  className={`flex-shrink-0 w-5 aspect-square rounded-full ${index === maxIndex ? 'bg-red-500' : 'bg-green-500'}`}
+                  className={`flex-shrink-0 w-5 aspect-square rounded-full ${index === selectedDiabeticRetinopathyIndex ? 'bg-red-500' : 'bg-green-500'}`}
                 />
               </div>
               <input
                 type='checkbox'
                 className='ml-2 w-6 h-6'
                 onClick={() => setCheckedIndex(!checkedIndex ? index + 1 : 0)}
-                disabled={isConfirm(checkedIndex, index + 1)}
+                disabled={!!checkedIndex && checkedIndex !== index + 1}
               />
             </div>
           )
@@ -103,17 +104,11 @@ const ImageResults: React.FC<ImageResultsProps> = ({ savedValues, setSavedValues
                 {defaultTitles[defaultTitles.length - 1]}
               </h4>
             </div>
-            <p className='mr-2'>{defaultTitles[checkedIndex ?? maxIndex]}</p>
+            <p className='mr-2'>{defaultTitles[selectedDiabeticRetinopathyIndex]}</p>
             <div className='flex items-center ml-auto'>
               <div className={`flex-shrink-0 w-5 aspect-square rounded-full bg-gray-200`} />
             </div>
             <div className='ml-2 w-6 h-6' />
-            {/* <input
-              type='checkbox'
-              className='ml-2 w-6 h-6'
-              checked={checkedIndex === defaultTitles.length - 1}
-              onChange={() => setCheckedIndex(defaultTitles.length - 1)}
-            /> */}
           </div>
         )
 
@@ -133,7 +128,7 @@ const ImageResults: React.FC<ImageResultsProps> = ({ savedValues, setSavedValues
               type='checkbox'
               className='ml-2 w-6 h-6'
               // checked={checkedIndex === index}
-              onChange={() => setCheckedIndex(index)}
+              onChange={() => setCheckedIndex(index + 1)}
             />
           </div>
         ))
@@ -149,12 +144,14 @@ const ImageResults: React.FC<ImageResultsProps> = ({ savedValues, setSavedValues
     <section id='image-result' className='pt-3 mb-4 bg-white rounded-xl shadow-pop'>
       <div className='px-4 pb-2 mb-2 flex justify-between items-center border-b-2 border-slate-400'>
         <h1 className='text-xl font-bold'>Kết quả ảnh</h1>
-        <button
-          onClick={isEditing ? handleSave : () => setIsEditing(true)}
-          className='flex-shrink-0 px-4 py-2 font-bold text-white rounded-lg bg-sky-600 hover:scale-105'
-        >
-          {isEditing ? 'Lưu' : 'Chỉnh sửa'}
-        </button>
+        {isEdit && (
+          <button
+            onClick={isEditing ? handleSave : () => setIsEditing(true)}
+            className='flex-shrink-0 px-4 py-2 font-bold text-white rounded-lg bg-sky-600 hover:scale-105'
+          >
+            {isEditing ? 'Lưu' : 'Chỉnh sửa'}
+          </button>
+        )}
       </div>
       {formattedPrediction.length > 0 ? (
         formattedPrediction

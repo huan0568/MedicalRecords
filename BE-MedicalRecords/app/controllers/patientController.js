@@ -65,11 +65,13 @@ exports.getPatientByIdPatient = async (req, res) => {
 
 exports.updatePatientById = async (req, res) => {
   try {
-    console.log('updatePatientById');
-    const patient = await Patient.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const patient = await Patient.findByIdAndUpdate(req.params.id, req.body.data, { new: true });
     if (!patient) {
       return res.status(404).json({ error: 'Patient not found' });
     }
+
+    console.log(patient)
+
     res.json(patient);
   } catch (error) {
     res.status(400).json({ error: error.message });
