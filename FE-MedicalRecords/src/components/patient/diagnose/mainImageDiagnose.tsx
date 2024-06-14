@@ -72,8 +72,23 @@ export default function MainImageDiagnose({
 
         const response = await axios.post('http://localhost:3001/images/upload', formData);
 
+        console.log('Server response:', response.data); // Log the server response for debugging
+
         if (response.status >= 200 && response.status < 300) {
           toast.success('Image(s) uploaded successfully');
+          const newImageId = response.data._id; // Assuming the response contains the new image ID
+
+          if (newImageId) {
+            if (currentType === 'UFI') {
+              setNormalImageIds((prev) => [...prev, newImageId]);
+              setCurrentImageIndex((normalImages?.length ?? 0) + 1 - 1);
+            } else {
+              setGrayImageIds((prev) => [...prev, newImageId]);
+              setCurrentImageIndex((grayImages?.length ?? 0) + 1 - 1);
+            }
+          } else {
+            toast.error('Invalid response format: _id is missing');
+          }
         } else {
           toast.error('Failed to upload image(s)');
         }
@@ -156,6 +171,8 @@ export default function MainImageDiagnose({
         severe_value: predictionValues[4],
         diabetic_Retinopathy: diabeticRetinopathy
       });
+
+      console.log(postResponse);
 
       setPrediction(JSON.stringify(response.data.prediction));
       setPredictionResults([]);
@@ -339,5 +356,14 @@ export default function MainImageDiagnose({
     </section>
   );
 }
+
+
+
+
+
+
+
+
+
 
 
