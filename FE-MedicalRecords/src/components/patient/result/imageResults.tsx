@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react'
-import { usePrediction } from '../../../pages/patient/PredictionContext'
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
+import { usePrediction } from '../../../pages/patient/PredictionContext';
 
-const defaultTitles = ['Mild', 'Moderate', 'No_DR', 'Proliferate_DR', 'Severe', 'Diabetic Retinopathy']
+const defaultTitles = ['Mild', 'Moderate', 'No_DR', 'Proliferate_DR', 'Severe', 'Diabetic Retinopathy'];
 
 const titleToKeyMapping: { [key: string]: string } = {
   mild: 'mild_value',
@@ -9,63 +10,86 @@ const titleToKeyMapping: { [key: string]: string } = {
   no_dr: 'noDR_value',
   proliferate_dr: 'proliferateDR_value',
   severe: 'severe_value'
-}
+};
 
 interface ImageResultsProps {
-  isEdit?: boolean
-  savedValues: { [key: string]: string }
-  setSavedValues: React.Dispatch<React.SetStateAction<{ [key: string]: string }>>
+  isEdit?: boolean;
+  savedValues: { [key: string]: string };
+  setSavedValues: React.Dispatch<React.SetStateAction<{ [key: string]: string }>>;
 }
 
 const ImageResults: React.FC<ImageResultsProps> = ({ savedValues, isEdit, setSavedValues }) => {
-  const { predictionResults } = usePrediction()
-  const [formattedPrediction, setFormattedPrediction] = useState<JSX.Element[]>([])
-  const [checkedIndex, setCheckedIndex] = useState<number>(0)
-  const [isEditing, setIsEditing] = useState<boolean>(isEdit)
-  const [editValues, setEditValues] = useState<{ [key: string]: string }>({})
+  const { predictionResults } = usePrediction();
+  const [formattedPrediction, setFormattedPrediction] = useState<JSX.Element[]>([]);
+  const [checkedIndex, setCheckedIndex] = useState<number | null>(null);
+  const [isEditing, setIsEditing] = useState<boolean>(isEdit);
+  const [editValues, setEditValues] = useState<{ [key: string]: string }>({});
 
   useEffect(() => {
+    console.log('Prediction Results:', predictionResults);
     if (predictionResults && predictionResults.length > 0) {
-      const initialEditValues: { [key: string]: string } = {}
+      const initialEditValues: { [key: string]: string } = {};
       defaultTitles.forEach((title) => {
-        const key = titleToKeyMapping[title.toLowerCase()]
-        initialEditValues[title] = parseFloat(predictionResults[0][key] || 0).toFixed(3)
-      })
-      setEditValues(initialEditValues)
-      setSavedValues(initialEditValues)
+        const key = titleToKeyMapping[title.toLowerCase()];
+        initialEditValues[title] = parseFloat(predictionResults[0][key] || 0).toFixed(3);
+      });
+      setEditValues(initialEditValues);
+      setSavedValues(initialEditValues);
     }
-  }, [predictionResults, setSavedValues])
+  }, [predictionResults, setSavedValues]);
+
+  useEffect(() => {
+    const fetchFeedback = async () => {
+      if (predictionResults && predictionResults.length > 0) {
+        const currentImageId = predictionResults[0].id_image;
+        try {
+          const response = await axios.get(`http://localhost:3001/feedbacks/image/${currentImageId}`);
+          console.log('Feedback Response:', response.data);
+          if (response.data && response.data.feedbacks && response.data.feedbacks.length > 0) {
+            const feedback = response.data.feedbacks[0];
+            const diabeticRetinopathyValue = feedback.diabetic_Retinopathy;
+            const selectedIndex = defaultTitles.findIndex((title) => title.toLowerCase() === diabeticRetinopathyValue.toLowerCase());
+            setCheckedIndex(selectedIndex + 1); // +1 to match index with checkbox options
+          } else {
+            setCheckedIndex(null); // No feedback found, reset checkbox selection
+          }
+        } catch (error) {
+          console.error('Error fetching feedback:', error);
+        }
+      }
+    };
+    fetchFeedback();
+  }, [predictionResults]);
 
   const handleEditChange = (title: string, value: string) => {
     setEditValues((prevValues) => ({
       ...prevValues,
       [title]: value
-    }))
-  }
+    }));
+  };
 
   const handleSave = () => {
     const newSavedValues = {
       ...editValues,
-      'Diabetic Retinopathy': defaultTitles[checkedIndex ? checkedIndex - 1 : 0] // Fixed here
-    }
-    setSavedValues(newSavedValues)
-    setIsEditing(false)
-  }
+      'Diabetic Retinopathy': defaultTitles[checkedIndex ? checkedIndex - 1 : 0] || '' // Adjusted for edge case
+    };
+    setSavedValues(newSavedValues);
+    setIsEditing(false);
+  };
 
   useEffect(() => {
     const formatPrediction = () => {
       if (predictionResults && predictionResults.length > 0) {
         const values = defaultTitles.map((title) => {
-          const key = titleToKeyMapping[title.toLowerCase()]
-          return parseFloat(predictionResults[0][key] || 0)
-        })
+          const key = titleToKeyMapping[title.toLowerCase()];
+          return parseFloat(predictionResults[0][key] || 0);
+        });
 
-        const selectedDiabeticRetinopathyIndex = checkedIndex ? checkedIndex - 1 : values.indexOf(Math.max(...values))
+        const selectedDiabeticRetinopathyIndex = checkedIndex ? checkedIndex - 1 : values.indexOf(Math.max(...values));
 
         const formattedData = defaultTitles.map((title, index) => {
-          const key = titleToKeyMapping[title.toLowerCase()]
-          const value = savedValues[title] || editValues[title] || ''
-          const diabeticRetinopathyValue = defaultTitles[selectedDiabeticRetinopathyIndex]
+          const value = savedValues[title] || editValues[title] || '';
+          const diabeticRetinopathyValue = defaultTitles[selectedDiabeticRetinopathyIndex];
 
           return (
             <div key={title} className='px-4 border-b flex-center-y border-slate-400'>
@@ -90,29 +114,15 @@ const ImageResults: React.FC<ImageResultsProps> = ({ savedValues, isEdit, setSav
               <input
                 type='checkbox'
                 className='ml-2 w-6 h-6'
-                onClick={() => setCheckedIndex(!checkedIndex ? index + 1 : 0)}
-                disabled={!!checkedIndex && checkedIndex !== index + 1}
+                checked={checkedIndex === index + 1}
+                onChange={() => setCheckedIndex(index + 1)}
+                disabled={isEditing}
               />
             </div>
-          )
-        })
+          );
+        });
 
-        formattedData[formattedData.length - 1] = (
-          <div key={defaultTitles[defaultTitles.length - 1]} className='px-4 border-b flex-center-y border-slate-400'>
-            <div className='w-32 flex-shrink-0'>
-              <h4 className='py-2 mr-4 border-r border-slate-400 overflow-hidden'>
-                {defaultTitles[defaultTitles.length - 1]}
-              </h4>
-            </div>
-            <p className='mr-2'>{defaultTitles[selectedDiabeticRetinopathyIndex]}</p>
-            <div className='flex items-center ml-auto'>
-              <div className={`flex-shrink-0 w-5 aspect-square rounded-full bg-gray-200`} />
-            </div>
-            <div className='ml-2 w-6 h-6' />
-          </div>
-        )
-
-        setFormattedPrediction(formattedData)
+        setFormattedPrediction(formattedData);
       } else {
         // If no results, display empty table
         const emptyTable = defaultTitles.map((title, index) => (
@@ -121,24 +131,25 @@ const ImageResults: React.FC<ImageResultsProps> = ({ savedValues, isEdit, setSav
               <h4 className='py-2 mr-4 border-r border-slate-400 overflow-hidden'>{title}</h4>
             </div>
             <p className='mr-2'></p>
-            <div className='flex items-center ml-auto'>
+            <div className='flex items-center ml-auto'> {/* Align to the right */}
               <div className={`flex-shrink-0 w-5 aspect-square rounded-full bg-gray-200`} />
+              <input
+                type='checkbox'
+                className='ml-2 w-6 h-6'
+                checked={checkedIndex === index + 1}
+                onChange={() => setCheckedIndex(index + 1)}
+                disabled={isEditing}
+              />
             </div>
-            <input
-              type='checkbox'
-              className='ml-2 w-6 h-6'
-              // checked={checkedIndex === index}
-              onChange={() => setCheckedIndex(index + 1)}
-            />
           </div>
-        ))
+        ));
 
-        setFormattedPrediction(emptyTable)
+        setFormattedPrediction(emptyTable);
       }
-    }
+    };
 
-    formatPrediction()
-  }, [predictionResults, checkedIndex, isEditing, editValues, savedValues])
+    formatPrediction();
+  }, [predictionResults, checkedIndex, isEditing, editValues, savedValues]);
 
   return (
     <section id='image-result' className='pt-3 mb-4 bg-white rounded-xl shadow-pop'>
@@ -161,19 +172,22 @@ const ImageResults: React.FC<ImageResultsProps> = ({ savedValues, isEdit, setSav
             <h4 className='py-2 mr-4 border-r border-slate-400 overflow-hidden'>No results</h4>
           </div>
           <p className='mr-2'></p>
-          <div className='flex items-center ml-auto'>
+          <div className='flex items-center ml-auto'> {/* Align to the right */}
             <div className={`flex-shrink-0 w-5 aspect-square rounded-full bg-gray-200`} />
+            <input
+              type='checkbox'
+              className='ml-2 w-6 h-6'
+              checked={checkedIndex === null}
+              onChange={() => setCheckedIndex(null)}
+              disabled={isEditing}
+            />
           </div>
-          {/* <input
-            type='checkbox'
-            className='ml-2 w-6 h-6'
-            checked={checkedIndex === null}
-            onChange={() => setCheckedIndex(null)}
-          /> */}
         </div>
       )}
     </section>
-  )
-}
+  );
+};
 
-export default ImageResults
+export default ImageResults;
+
+
