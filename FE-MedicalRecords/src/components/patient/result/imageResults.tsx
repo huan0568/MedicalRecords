@@ -22,7 +22,7 @@ const ImageResults: React.FC<ImageResultsProps> = ({ savedValues, isEdit, setSav
   const { predictionResults } = usePrediction();
   const [formattedPrediction, setFormattedPrediction] = useState<JSX.Element[]>([]);
   const [checkedIndex, setCheckedIndex] = useState<number | null>(null);
-  const [isEditing, setIsEditing] = useState<boolean>(isEdit);
+  const [isEditing, setIsEditing] = useState<boolean>(false);
   const [editValues, setEditValues] = useState<{ [key: string]: string }>({});
 
   useEffect(() => {
@@ -69,12 +69,21 @@ const ImageResults: React.FC<ImageResultsProps> = ({ savedValues, isEdit, setSav
   };
 
   const handleSave = () => {
+    console.log('Checked Index before save:', checkedIndex);
+    const index = checkedIndex ? checkedIndex - 1 : 0; // Convert 1-based to 0-based index
+    console.log('Index used for saving:', index);
     const newSavedValues = {
       ...editValues,
-      'Diabetic Retinopathy': defaultTitles[checkedIndex ? checkedIndex - 1 : 0] || '' // Adjusted for edge case
+      'Diabetic Retinopathy': defaultTitles[index] || ''
     };
     setSavedValues(newSavedValues);
     setIsEditing(false);
+  };
+
+  const handleCheckboxClick = (index: number) => {
+    console.log('Title clicked:', defaultTitles[index]);
+    setCheckedIndex(index + 1); // Update checkedIndex for styling purposes
+    handleEditChange('Diabetic Retinopathy', defaultTitles[index]); // Update editValues directly
   };
 
   useEffect(() => {
@@ -89,7 +98,6 @@ const ImageResults: React.FC<ImageResultsProps> = ({ savedValues, isEdit, setSav
 
         const formattedData = defaultTitles.map((title, index) => {
           const value = savedValues[title] || editValues[title] || '';
-          const diabeticRetinopathyValue = defaultTitles[selectedDiabeticRetinopathyIndex];
 
           return (
             <div key={title} className='px-4 border-b flex-center-y border-slate-400'>
@@ -115,8 +123,11 @@ const ImageResults: React.FC<ImageResultsProps> = ({ savedValues, isEdit, setSav
                 type='checkbox'
                 className='ml-2 w-6 h-6'
                 checked={checkedIndex === index + 1}
-                onChange={() => setCheckedIndex(index + 1)}
-                disabled={isEditing}
+                onChange={() => {
+                  setCheckedIndex(index + 1);
+                  handleCheckboxClick(index); // Log title when checkbox is clicked
+                }}
+                disabled={!isEditing} // Enable checkbox only in editing mode
               />
             </div>
           );
@@ -137,8 +148,11 @@ const ImageResults: React.FC<ImageResultsProps> = ({ savedValues, isEdit, setSav
                 type='checkbox'
                 className='ml-2 w-6 h-6'
                 checked={checkedIndex === index + 1}
-                onChange={() => setCheckedIndex(index + 1)}
-                disabled={isEditing}
+                onChange={() => {
+                  setCheckedIndex(index + 1);
+                  handleCheckboxClick(index); // Log title when checkbox is clicked
+                }}
+                disabled={!isEditing} // Enable checkbox only in editing mode
               />
             </div>
           </div>
@@ -157,7 +171,13 @@ const ImageResults: React.FC<ImageResultsProps> = ({ savedValues, isEdit, setSav
         <h1 className='text-xl font-bold'>Kết quả ảnh</h1>
         {isEdit && (
           <button
-            onClick={isEditing ? handleSave : () => setIsEditing(true)}
+            onClick={() => {
+              if (isEditing) {
+                handleSave();
+              } else {
+                setIsEditing(true);
+              }
+            }}
             className='flex-shrink-0 px-4 py-2 font-bold text-white rounded-lg bg-sky-600 hover:scale-105'
           >
             {isEditing ? 'Lưu' : 'Chỉnh sửa'}
@@ -179,7 +199,7 @@ const ImageResults: React.FC<ImageResultsProps> = ({ savedValues, isEdit, setSav
               className='ml-2 w-6 h-6'
               checked={checkedIndex === null}
               onChange={() => setCheckedIndex(null)}
-              disabled={isEditing}
+              disabled={!isEditing} // Enable checkbox only in editing mode
             />
           </div>
         </div>
@@ -189,5 +209,8 @@ const ImageResults: React.FC<ImageResultsProps> = ({ savedValues, isEdit, setSav
 };
 
 export default ImageResults;
+
+
+
 
 

@@ -49,6 +49,9 @@ const CommentDoctor: React.FC<IProps> = ({ data, savedValues, currentImageId }) 
       return;
     }
 
+    // Log savedValues to ensure we have the correct values
+    console.log('Saving feedback with values:', savedValues);
+
     const feedbackData = {
       id_image: currentImageId,
       mild_value: Number(savedValues.Mild),
@@ -59,6 +62,9 @@ const CommentDoctor: React.FC<IProps> = ({ data, savedValues, currentImageId }) 
       diabetic_Retinopathy: savedValues['Diabetic Retinopathy'],
       feedback: comment,
     };
+
+    // Log feedback data to ensure it's correctly formed
+    console.log('Feedback data being sent:', feedbackData);
 
     try {
       const response = await axios.post('http://localhost:3001/feedbacks/create', feedbackData);
@@ -74,6 +80,7 @@ const CommentDoctor: React.FC<IProps> = ({ data, savedValues, currentImageId }) 
   };
 
   const handleConfirm = () => {
+    console.log('Confirm button clicked');
     setConfirmClicked(true);
     handleSaveFeedback();
   };
@@ -97,11 +104,18 @@ const CommentDoctor: React.FC<IProps> = ({ data, savedValues, currentImageId }) 
         setOpenComment={() => setOpenComment(!openComment)}
       />
 
+      <div className="flex justify-center mt-4">
+        <button
+          onClick={handleConfirm}
+          className="px-4 py-2 font-bold text-white bg-blue-500 rounded hover:bg-blue-700"
+        >
+          Confirm
+        </button>
+      </div>
+
       {confirmClicked && <p className='text-center mt-2 text-gray-500'>Feedback confirmed</p>}
     </section>
   );
 };
 
 export default CommentDoctor;
-
-
